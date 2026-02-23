@@ -104,7 +104,7 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
                     rows={10}
                     placeholder="Cover letter will appear here. You can edit it before submitting."
                     className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-xs text-slate-100
-                               placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 resize-none leading-relaxed"
+                               placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30 resize-none leading-relaxed"
                   />
                 </div>
 
@@ -122,7 +122,7 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
                           }))}
                           rows={3}
                           className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-xs
-                                     text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 resize-none"
+                                     text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500/30 resize-none"
                         />
                       </div>
                     ))}
@@ -157,7 +157,7 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
             <button
               onClick={handleSubmit}
               disabled={submitting || loading || !draft}
-              className="px-5 py-2 text-sm bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-40
+              className="px-5 py-2 text-sm bg-blue-500 hover:bg-blue-400 text-white disabled:opacity-40
                          rounded-lg font-semibold transition-colors"
             >
               {submitting ? 'Submitting...' : 'Submit Application'}

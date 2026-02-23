@@ -303,7 +303,7 @@ export default function Dashboard() {
           <button
             onClick={startCrawl}
             disabled={isCrawling}
-            className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-50
+            className="px-5 py-2 bg-blue-500 hover:bg-blue-400 text-white disabled:opacity-50
                        rounded-xl text-sm font-semibold transition-colors"
           >
             {isCrawling ? 'Crawling...' : 'Crawl Now'}
@@ -425,7 +425,7 @@ export default function Dashboard() {
           onChange={e => setSearch(e.target.value)}
           placeholder="Search title, company, location, description..."
           className="w-full bg-[#1c2026] border border-[#2a3241] rounded-xl pl-9 pr-8 py-2 text-sm
-                     text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                     text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
         />
         {search && (
           <button
@@ -458,7 +458,7 @@ export default function Dashboard() {
           value={filter.source}
           onChange={e => setFilter(f => ({ ...f, source: e.target.value }))}
           className="bg-[#1c2026] border border-[#2a3241] rounded-xl px-3 py-1.5 text-xs text-slate-200
-                     focus:outline-none focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                     focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer"
         >
           <option value="all">All Sources{jobs.length ? ` (${jobs.length})` : ''}</option>
           <optgroup label="Platforms">
@@ -582,14 +582,14 @@ export default function Dashboard() {
             onChange={e => setFilter(f => ({ ...f, salary_min: e.target.value }))}
             placeholder="Min $"
             className="w-24 bg-[#1c2026] border border-[#2a3241] rounded-lg px-2 py-1 text-xs text-slate-100
-                       placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                       placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
           />
           <span className="text-slate-600 text-xs">–</span>
           <input type="number" value={filter.salary_max}
             onChange={e => setFilter(f => ({ ...f, salary_max: e.target.value }))}
             placeholder="Max $"
             className="w-24 bg-[#1c2026] border border-[#2a3241] rounded-lg px-2 py-1 text-xs text-slate-100
-                       placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                       placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
 
@@ -601,7 +601,7 @@ export default function Dashboard() {
               checked={allSelected}
               onChange={toggleSelectAll}
               title="Select all visible"
-              className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+              className="w-4 h-4 rounded accent-blue-500 cursor-pointer"
             />
           )}
           <span className="text-sm text-slate-500">{visibleCount} jobs</span>

@@ -159,7 +159,7 @@ export default function JobCard({
         className={`
           bg-[#1c2026] border rounded-xl px-4 py-3 flex items-center gap-3 transition-all
           ${statusColors[job.status] || 'border-[#2a3241]'}
-          ${selected ? 'ring-1 ring-emerald-500/50 ring-offset-1 ring-offset-[#121212]' : ''}
+          ${selected ? 'ring-1 ring-blue-500/50 ring-offset-1 ring-offset-[#121212]' : ''}
           ${selectable ? 'cursor-pointer hover:border-[#334155]' : ''}
         `}
       >
@@ -171,7 +171,7 @@ export default function JobCard({
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-sm font-semibold text-white truncate">{job.title}</span>
             {isNew && job.status === 'new' && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500 text-white font-bold shrink-0">NEW</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500 text-white font-bold shrink-0">NEW</span>
             )}
             {job.status === 'saved' && (
               <span className="text-xs px-2 py-0.5 rounded-full bg-[#252d38] text-slate-300 font-medium shrink-0">Saved</span>
@@ -214,7 +214,7 @@ export default function JobCard({
             <button onClick={sp(() => onStatusChange(job.id, 'denied'))}
               className="px-2.5 py-1 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg text-xs font-semibold transition-colors">Deny</button>
             <button onClick={sp(() => onApply(job))}
-              className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-xs font-semibold transition-colors">Apply</button>
+              className="px-2.5 py-1 bg-blue-500 hover:bg-blue-400 text-white rounded-lg text-xs font-semibold transition-colors">Apply</button>
           </div>
         ) : null}
 
@@ -232,7 +232,7 @@ export default function JobCard({
       className={`
         bg-[#1c2026] border rounded-xl p-4 space-y-3 transition-all
         ${statusColors[job.status] || 'border-[#2a3241]'}
-        ${selected ? 'ring-1 ring-emerald-500/50 ring-offset-1 ring-offset-[#121212]' : ''}
+        ${selected ? 'ring-1 ring-blue-500/50 ring-offset-1 ring-offset-[#121212]' : ''}
         ${selectable ? 'cursor-pointer hover:border-[#334155]' : ''}
       `}
     >
@@ -243,7 +243,7 @@ export default function JobCard({
               {sourceLabel(job.source)}
             </span>
             {isNew && job.status === 'new' && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500 text-white font-bold">NEW</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500 text-white font-bold">NEW</span>
             )}
             {job.relevance_score >= 8 && (
               <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
@@ -303,7 +303,7 @@ export default function JobCard({
         <div className="flex gap-2 pt-1">
           <button
             onClick={sp(() => onApply(job))}
-            className="flex-1 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-xs font-semibold transition-colors"
+            className="flex-1 py-1.5 bg-blue-500 hover:bg-blue-400 text-white rounded-lg text-xs font-semibold transition-colors"
           >Apply</button>
           <button
             onClick={sp(() => onView && onView(job))}

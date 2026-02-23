@@ -11,7 +11,7 @@ function NavItem({ to, label }) {
       className={({ isActive }) =>
         `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
           isActive
-            ? 'bg-emerald-500 text-white'
+            ? 'bg-blue-500 text-white'
             : 'text-slate-400 hover:text-slate-100 hover:bg-[#252d38]'
         }`
       }

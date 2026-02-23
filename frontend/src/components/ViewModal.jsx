@@ -85,7 +85,7 @@ export default function JobPanel({ job, onClose, onApply, onStatusChange }) {
               </button>
               <button
                 onClick={() => { onClose(); onApply(job) }}
-                className="px-5 py-2 text-sm bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
+                className="px-5 py-2 text-sm bg-blue-500 hover:bg-blue-400 text-white rounded-lg font-semibold transition-colors"
               >
                 Apply
               </button>
