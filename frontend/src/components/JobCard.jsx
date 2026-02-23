@@ -69,6 +69,8 @@ const crawledAgo = (iso) => {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+const sp = (fn) => (e) => { e.stopPropagation(); fn(e) }
+
 export default function JobCard({
   job, onStatusChange, onApply, onView,
   isNew = false, compact = false,
@@ -76,6 +78,7 @@ export default function JobCard({
 }) {
   const cleanDesc = stripHtml(job.description)
   const badge = SOURCE_COLORS[job.source] || 'bg-gray-800 text-gray-300'
+  const selectable = !!onSelect && job.status !== 'applied'
   const statusColors = {
     new:     'border-gray-700',
     saved:   'border-indigo-700',
@@ -143,9 +146,7 @@ export default function JobCard({
         <button
           onClick={() => onStatusChange(job.id, 'new')}
           className="w-full py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
-        >
-          Undo
-        </button>
+        >Undo</button>
       </div>
     )
   }
@@ -153,21 +154,15 @@ export default function JobCard({
   // ── Compact (list) mode ──────────────────────────────────────────────────────
   if (compact) {
     return (
-      <div className={`
-        bg-gray-900 border rounded-xl px-4 py-3 flex items-center gap-3 transition-all
-        ${statusColors[job.status] || 'border-gray-700'}
-        ${selected ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-gray-950' : ''}
-      `}>
-        {onSelect && job.status !== 'applied' && (
-          <input
-            type="checkbox"
-            checked={selected || false}
-            onChange={() => onSelect(job.id)}
-            onClick={e => e.stopPropagation()}
-            className="w-4 h-4 shrink-0 rounded accent-indigo-500 cursor-pointer"
-          />
-        )}
-
+      <div
+        onClick={() => selectable && onSelect(job.id)}
+        className={`
+          bg-gray-900 border rounded-xl px-4 py-3 flex items-center gap-3 transition-all
+          ${statusColors[job.status] || 'border-gray-700'}
+          ${selected ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-gray-950' : ''}
+          ${selectable ? 'cursor-pointer hover:border-gray-600' : ''}
+        `}
+      >
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badge}`}>
           {sourceLabel(job.source)}
         </span>
@@ -212,18 +207,19 @@ export default function JobCard({
 
         {job.status !== 'applied' ? (
           <div className="flex gap-1.5 shrink-0">
-            <button onClick={() => onView && onView(job)}
+            <button onClick={sp(() => onView && onView(job))}
               className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors">View</button>
-            <button onClick={() => onStatusChange(job.id, 'saved')}
+            <button onClick={sp(() => onStatusChange(job.id, 'saved'))}
               className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors">Save</button>
-            <button onClick={() => onStatusChange(job.id, 'denied')}
+            <button onClick={sp(() => onStatusChange(job.id, 'denied'))}
               className="px-2.5 py-1 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg text-xs font-semibold transition-colors">Deny</button>
-            <button onClick={() => onApply(job)}
+            <button onClick={sp(() => onApply(job))}
               className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold transition-colors">Apply</button>
           </div>
         ) : null}
 
         <a href={job.url} target="_blank" rel="noopener noreferrer"
+          onClick={sp(() => {})}
           className="shrink-0 text-gray-500 hover:text-gray-300 text-sm" title="Open original posting">↗</a>
       </div>
     )
@@ -231,56 +227,50 @@ export default function JobCard({
 
   // ── Normal (grid) card ───────────────────────────────────────────────────────
   return (
-    <div className={`
-      bg-gray-900 border rounded-xl p-4 space-y-3 transition-all
-      ${statusColors[job.status] || 'border-gray-700'}
-      ${selected ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-gray-950' : ''}
-    `}>
+    <div
+      onClick={() => selectable && onSelect(job.id)}
+      className={`
+        bg-gray-900 border rounded-xl p-4 space-y-3 transition-all
+        ${statusColors[job.status] || 'border-gray-700'}
+        ${selected ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-gray-950' : ''}
+        ${selectable ? 'cursor-pointer hover:border-gray-600' : ''}
+      `}
+    >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-start gap-2 flex-1 min-w-0">
-          {onSelect && job.status !== 'applied' && (
-            <input
-              type="checkbox"
-              checked={selected || false}
-              onChange={() => onSelect(job.id)}
-              onClick={e => e.stopPropagation()}
-              className="mt-1 w-4 h-4 shrink-0 rounded accent-indigo-500 cursor-pointer"
-            />
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
-                {sourceLabel(job.source)}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
+              {sourceLabel(job.source)}
+            </span>
+            {isNew && job.status === 'new' && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-600 text-white font-bold">NEW</span>
+            )}
+            {job.relevance_score >= 8 && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                ▲ Top Match
               </span>
-              {isNew && job.status === 'new' && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-600 text-white font-bold">NEW</span>
-              )}
-              {job.relevance_score >= 8 && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  ▲ Top Match
-                </span>
-              )}
-              {job.relevance_score >= 6 && job.relevance_score < 8 && (
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-lime-500/10 text-lime-400 border border-lime-500/20">
-                  Good Match
-                </span>
-              )}
-              {job.status === 'applied' && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300 font-medium">Applied</span>
-              )}
-              {job.status === 'saved' && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 font-medium">Saved</span>
-              )}
-            </div>
-            <h3 className="text-base font-semibold text-white mt-1 leading-snug">{job.title}</h3>
-            <p className="text-sm text-gray-400">{job.company}</p>
+            )}
+            {job.relevance_score >= 6 && job.relevance_score < 8 && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-lime-500/10 text-lime-400 border border-lime-500/20">
+                Good Match
+              </span>
+            )}
+            {job.status === 'applied' && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300 font-medium">Applied</span>
+            )}
+            {job.status === 'saved' && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 font-medium">Saved</span>
+            )}
           </div>
+          <h3 className="text-base font-semibold text-white mt-1 leading-snug">{job.title}</h3>
+          <p className="text-sm text-gray-400">{job.company}</p>
         </div>
 
         <a
           href={job.url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={sp(() => {})}
           className="shrink-0 text-gray-500 hover:text-gray-300 text-sm leading-none"
           title="Open original posting"
         >↗</a>
@@ -312,19 +302,19 @@ export default function JobCard({
       {job.status !== 'applied' && (
         <div className="flex gap-2 pt-1">
           <button
-            onClick={() => onApply(job)}
+            onClick={sp(() => onApply(job))}
             className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold transition-colors"
           >Apply</button>
           <button
-            onClick={() => onView && onView(job)}
+            onClick={sp(() => onView && onView(job))}
             className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
           >View</button>
           <button
-            onClick={() => onStatusChange(job.id, 'saved')}
+            onClick={sp(() => onStatusChange(job.id, 'saved'))}
             className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
           >Save</button>
           <button
-            onClick={() => onStatusChange(job.id, 'denied')}
+            onClick={sp(() => onStatusChange(job.id, 'denied'))}
             className="flex-1 py-1.5 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg text-xs font-semibold transition-colors"
             title="Deny: permanently removes this job and blocks it from reappearing"
           >Deny</button>
