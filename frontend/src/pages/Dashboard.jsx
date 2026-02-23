@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import JobCard from '../components/JobCard'
 import ApplyModal from '../components/ApplyModal'
+import JobPanel from '../components/ViewModal'
 
 const API = '/api'
 const POLL_INTERVAL = 3000
@@ -19,6 +20,42 @@ export default function Dashboard() {
   const [sort, setSort] = useState('date')
   const [showHidden, setShowHidden] = useState(false)
   const [hiddenJobs, setHiddenJobs] = useState([])
+
+  // ── New state ────────────────────────────────────────────────────────────────
+  const [panelJob, setPanelJob] = useState(null)
+  const [viewMode, setViewMode] = useState('grid')
+  const [seenIds, setSeenIds] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('seenJobIds') || '[]')) }
+    catch { return new Set() }
+  })
+
+  const markSeen = useCallback((id) => {
+    setSeenIds(prev => {
+      if (prev.has(id)) return prev
+      const next = new Set(prev)
+      next.add(id)
+      localStorage.setItem('seenJobIds', JSON.stringify([...next]))
+      return next
+    })
+  }, [])
+
+  const openPanel = useCallback((job) => {
+    setPanelJob(job)
+    markSeen(job.id)
+  }, [markSeen])
+
+  // Source counts derived from current job list (server-side filtered)
+  const sourceCounts = useMemo(() => {
+    const counts = {}
+    jobs.forEach(j => { counts[j.source] = (counts[j.source] || 0) + 1 })
+    return counts
+  }, [jobs])
+
+  const srcOpt = (value, label) => {
+    const c = sourceCounts[value]
+    return c ? `${label} (${c})` : label
+  }
+  // ────────────────────────────────────────────────────────────────────────────
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -194,6 +231,7 @@ export default function Dashboard() {
         body: JSON.stringify({ status }),
       })
       setJobs(js => js.map(j => j.id === jobId ? { ...j, status } : j))
+      setPanelJob(prev => prev?.id === jobId ? { ...prev, status } : prev)
       if (hiddenJobs.some(j => j.id === jobId)) {
         setHiddenJobs(hj => hj.filter(j => j.id !== jobId))
         fetchJobs()
@@ -205,6 +243,7 @@ export default function Dashboard() {
 
   const handleSubmitted = (jobId) => {
     setJobs(js => js.map(j => j.id === jobId ? { ...j, status: 'applied' } : j))
+    setPanelJob(prev => prev?.id === jobId ? { ...prev, status: 'applied' } : prev)
     setApplyJob(null)
   }
 
@@ -374,74 +413,74 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Source — dropdown */}
+        {/* Source — dropdown with counts */}
         <select
           value={filter.source}
           onChange={e => setFilter(f => ({ ...f, source: e.target.value }))}
           className="bg-gray-900 border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-200
                      focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
         >
-          <option value="all">All Sources</option>
+          <option value="all">All Sources{jobs.length ? ` (${jobs.length})` : ''}</option>
           <optgroup label="Platforms">
-            <option value="glassdoor">Glassdoor</option>
+            <option value="glassdoor">{srcOpt('glassdoor', 'Glassdoor')}</option>
           </optgroup>
           <optgroup label="AI & Research">
-            <option value="anthropic">Anthropic</option>
-            <option value="databricks">Databricks</option>
-            <option value="mistral_ai">Mistral AI</option>
-            <option value="openai">OpenAI</option>
-            <option value="scale_ai">Scale AI</option>
-            <option value="xai">xAI</option>
+            <option value="anthropic">{srcOpt('anthropic', 'Anthropic')}</option>
+            <option value="databricks">{srcOpt('databricks', 'Databricks')}</option>
+            <option value="mistral_ai">{srcOpt('mistral_ai', 'Mistral AI')}</option>
+            <option value="openai">{srcOpt('openai', 'OpenAI')}</option>
+            <option value="scale_ai">{srcOpt('scale_ai', 'Scale AI')}</option>
+            <option value="xai">{srcOpt('xai', 'xAI')}</option>
           </optgroup>
           <optgroup label="Big Tech">
-            <option value="amazon">Amazon</option>
-            <option value="apple">Apple</option>
-            <option value="google">Google</option>
-            <option value="microsoft">Microsoft</option>
-            <option value="nvidia">Nvidia</option>
+            <option value="amazon">{srcOpt('amazon', 'Amazon')}</option>
+            <option value="apple">{srcOpt('apple', 'Apple')}</option>
+            <option value="google">{srcOpt('google', 'Google')}</option>
+            <option value="microsoft">{srcOpt('microsoft', 'Microsoft')}</option>
+            <option value="nvidia">{srcOpt('nvidia', 'Nvidia')}</option>
           </optgroup>
           <optgroup label="Cybersecurity">
-            <option value="crowdstrike">CrowdStrike</option>
-            <option value="okta">Okta</option>
-            <option value="pure_storage">Pure Storage</option>
-            <option value="rubrik">Rubrik</option>
-            <option value="zscaler">Zscaler</option>
+            <option value="crowdstrike">{srcOpt('crowdstrike', 'CrowdStrike')}</option>
+            <option value="okta">{srcOpt('okta', 'Okta')}</option>
+            <option value="pure_storage">{srcOpt('pure_storage', 'Pure Storage')}</option>
+            <option value="rubrik">{srcOpt('rubrik', 'Rubrik')}</option>
+            <option value="zscaler">{srcOpt('zscaler', 'Zscaler')}</option>
           </optgroup>
           <optgroup label="Data & Cloud">
-            <option value="cloudflare">Cloudflare</option>
-            <option value="datadog">Datadog</option>
-            <option value="elastic">Elastic</option>
-            <option value="mongodb">MongoDB</option>
-            <option value="snowflake">Snowflake</option>
+            <option value="cloudflare">{srcOpt('cloudflare', 'Cloudflare')}</option>
+            <option value="datadog">{srcOpt('datadog', 'Datadog')}</option>
+            <option value="elastic">{srcOpt('elastic', 'Elastic')}</option>
+            <option value="mongodb">{srcOpt('mongodb', 'MongoDB')}</option>
+            <option value="snowflake">{srcOpt('snowflake', 'Snowflake')}</option>
           </optgroup>
           <optgroup label="Fintech & Crypto">
-            <option value="coinbase">Coinbase</option>
-            <option value="fanduel">FanDuel</option>
-            <option value="robinhood">Robinhood</option>
-            <option value="stripe">Stripe</option>
+            <option value="coinbase">{srcOpt('coinbase', 'Coinbase')}</option>
+            <option value="fanduel">{srcOpt('fanduel', 'FanDuel')}</option>
+            <option value="robinhood">{srcOpt('robinhood', 'Robinhood')}</option>
+            <option value="stripe">{srcOpt('stripe', 'Stripe')}</option>
           </optgroup>
           <optgroup label="Gaming & Entertainment">
-            <option value="bungie">Bungie</option>
-            <option value="discord">Discord</option>
-            <option value="epic_games">Epic Games</option>
-            <option value="netflix">Netflix</option>
-            <option value="riot_games">Riot Games</option>
-            <option value="roblox">Roblox</option>
+            <option value="bungie">{srcOpt('bungie', 'Bungie')}</option>
+            <option value="discord">{srcOpt('discord', 'Discord')}</option>
+            <option value="epic_games">{srcOpt('epic_games', 'Epic Games')}</option>
+            <option value="netflix">{srcOpt('netflix', 'Netflix')}</option>
+            <option value="riot_games">{srcOpt('riot_games', 'Riot Games')}</option>
+            <option value="roblox">{srcOpt('roblox', 'Roblox')}</option>
           </optgroup>
           <optgroup label="SaaS & Dev Tools">
-            <option value="figma">Figma</option>
-            <option value="palantir">Palantir</option>
-            <option value="twilio">Twilio</option>
-            <option value="zoom">Zoom</option>
+            <option value="figma">{srcOpt('figma', 'Figma')}</option>
+            <option value="palantir">{srcOpt('palantir', 'Palantir')}</option>
+            <option value="twilio">{srcOpt('twilio', 'Twilio')}</option>
+            <option value="zoom">{srcOpt('zoom', 'Zoom')}</option>
           </optgroup>
           <optgroup label="Consumer & Marketplace">
-            <option value="airbnb">Airbnb</option>
-            <option value="lyft">Lyft</option>
-            <option value="reddit">Reddit</option>
+            <option value="airbnb">{srcOpt('airbnb', 'Airbnb')}</option>
+            <option value="lyft">{srcOpt('lyft', 'Lyft')}</option>
+            <option value="reddit">{srcOpt('reddit', 'Reddit')}</option>
           </optgroup>
         </select>
 
-        {/* Feature 8 — Age filter */}
+        {/* Age filter */}
         <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
           {[
             { key: 'all', label: 'All time' },
@@ -477,6 +516,24 @@ export default function Dashboard() {
               {label}
             </button>
           ))}
+        </div>
+
+        {/* View mode toggle */}
+        <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
+          <button
+            onClick={() => setViewMode('grid')}
+            title="Grid view"
+            className={`px-2.5 py-1 rounded-lg text-sm transition-colors ${
+              viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >⊞</button>
+          <button
+            onClick={() => setViewMode('list')}
+            title="List view"
+            className={`px-2.5 py-1 rounded-lg text-sm transition-colors ${
+              viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >☰</button>
         </div>
 
         {/* Salary */}
@@ -521,7 +578,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Feature 7 — Bulk action bar */}
+      {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 bg-indigo-950 border border-indigo-800 rounded-xl px-4 py-2.5">
           <span className="text-sm text-indigo-300 font-medium">
@@ -554,7 +611,7 @@ export default function Dashboard() {
         <p className="text-sm text-red-400 bg-red-950 border border-red-800 rounded-lg px-4 py-2">{error}</p>
       )}
 
-      {/* Job grid */}
+      {/* Job grid / list */}
       {loading ? (
         <div className="text-center text-gray-500 py-20">Loading...</div>
       ) : filteredJobs.length === 0 ? (
@@ -573,7 +630,7 @@ export default function Dashboard() {
             </>
           )}
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredJobs.map(job => (
             <JobCard
@@ -581,6 +638,24 @@ export default function Dashboard() {
               job={job}
               onStatusChange={handleStatusChange}
               onApply={setApplyJob}
+              onView={openPanel}
+              isNew={!seenIds.has(job.id)}
+              selected={selectedIds.has(job.id)}
+              onSelect={handleToggleSelect}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filteredJobs.map(job => (
+            <JobCard
+              key={job.id}
+              job={job}
+              onStatusChange={handleStatusChange}
+              onApply={setApplyJob}
+              onView={openPanel}
+              isNew={!seenIds.has(job.id)}
+              compact
               selected={selectedIds.has(job.id)}
               onSelect={handleToggleSelect}
             />
@@ -593,13 +668,18 @@ export default function Dashboard() {
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
             Hidden — {hiddenJobs.length} job{hiddenJobs.length !== 1 ? 's' : ''}
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className={viewMode === 'list'
+            ? 'flex flex-col gap-2'
+            : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'
+          }>
             {hiddenJobs.map(job => (
               <JobCard
                 key={job.id}
                 job={job}
                 onStatusChange={handleStatusChange}
                 onApply={setApplyJob}
+                onView={openPanel}
+                compact={viewMode === 'list'}
                 selected={false}
                 onSelect={null}
                 hidden={true}
@@ -614,6 +694,15 @@ export default function Dashboard() {
           job={applyJob}
           onClose={() => setApplyJob(null)}
           onSubmitted={handleSubmitted}
+        />
+      )}
+
+      {panelJob && (
+        <JobPanel
+          job={panelJob}
+          onClose={() => setPanelJob(null)}
+          onApply={(job) => { setPanelJob(null); setApplyJob(job) }}
+          onStatusChange={handleStatusChange}
         />
       )}
     </div>

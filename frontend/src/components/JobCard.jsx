@@ -1,5 +1,4 @@
-import React, { useState } from 'react'
-import ViewModal from './ViewModal'
+import React from 'react'
 
 const SOURCE_COLORS = {
   glassdoor:   'bg-green-900 text-green-300',
@@ -35,7 +34,6 @@ const SOURCE_COLORS = {
   snowflake:   'bg-cyan-800 text-cyan-200',
 }
 
-// Pretty-print snake_case source: "scale_ai" → "Scale AI"
 const sourceLabel = (src) =>
   src.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
@@ -64,17 +62,19 @@ const crawledAgo = (iso) => {
   const mins  = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days  = Math.floor(diff / 86400000)
-  if (mins < 1)   return 'Crawled just now'
-  if (mins < 60)  return `Crawled ${mins}m ago`
-  if (hours < 24) return `Crawled ${hours}h ago`
-  if (days < 7)   return `Crawled ${days}d ago`
-  return `Crawled ${new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+  if (mins < 1)   return 'just now'
+  if (mins < 60)  return `${mins}m ago`
+  if (hours < 24) return `${hours}h ago`
+  if (days < 7)   return `${days}d ago`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export default function JobCard({ job, onStatusChange, onApply, selected, onSelect, hidden = false }) {
-  const [viewOpen, setViewOpen] = useState(false)
+export default function JobCard({
+  job, onStatusChange, onApply, onView,
+  isNew = false, compact = false,
+  selected, onSelect, hidden = false,
+}) {
   const cleanDesc = stripHtml(job.description)
-
   const badge = SOURCE_COLORS[job.source] || 'bg-gray-800 text-gray-300'
   const statusColors = {
     new:     'border-gray-700',
@@ -86,7 +86,34 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
 
   if ((job.status === 'skipped' || job.status === 'denied') && !hidden) return null
 
+  // ── Hidden card ─────────────────────────────────────────────────────────────
   if (hidden) {
+    if (compact) {
+      return (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 flex items-center gap-3 opacity-50 hover:opacity-80 transition-opacity">
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badge}`}>
+            {sourceLabel(job.source)}
+          </span>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
+            job.status === 'denied' ? 'bg-red-950 text-red-400' : 'bg-gray-800 text-gray-500'
+          }`}>{job.status}</span>
+          <span className="flex-1 min-w-0 text-sm font-semibold text-white truncate">{job.title}</span>
+          <span className="text-xs text-gray-400 shrink-0 hidden sm:block">{job.company}</span>
+          {onView && (
+            <button onClick={() => onView(job)}
+              className="shrink-0 text-xs text-gray-400 hover:text-gray-200 transition-colors">
+              View
+            </button>
+          )}
+          <a href={job.url} target="_blank" rel="noopener noreferrer"
+            className="shrink-0 text-gray-500 hover:text-gray-300 text-sm">↗</a>
+          <button
+            onClick={() => onStatusChange(job.id, 'new')}
+            className="shrink-0 px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
+          >Undo</button>
+        </div>
+      )
+    }
     return (
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3 opacity-50 hover:opacity-80 transition-opacity">
         <div className="flex items-start justify-between gap-2">
@@ -97,17 +124,21 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
               </span>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 job.status === 'denied' ? 'bg-red-950 text-red-400' : 'bg-gray-800 text-gray-500'
-              }`}>
-                {job.status}
-              </span>
+              }`}>{job.status}</span>
             </div>
             <h3 className="text-sm font-semibold text-white mt-1 leading-snug">{job.title}</h3>
             <p className="text-xs text-gray-400">{job.company}</p>
           </div>
-          <a href={job.url} target="_blank" rel="noopener noreferrer"
-            className="shrink-0 text-xs text-indigo-400 hover:text-indigo-300 underline">
-            View
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            {onView && (
+              <button onClick={() => onView(job)}
+                className="text-xs text-indigo-400 hover:text-indigo-300 underline">
+                View
+              </button>
+            )}
+            <a href={job.url} target="_blank" rel="noopener noreferrer"
+              className="text-gray-500 hover:text-gray-300 text-sm">↗</a>
+          </div>
         </div>
         <button
           onClick={() => onStatusChange(job.id, 'new')}
@@ -119,6 +150,86 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
     )
   }
 
+  // ── Compact (list) mode ──────────────────────────────────────────────────────
+  if (compact) {
+    return (
+      <div className={`
+        bg-gray-900 border rounded-xl px-4 py-3 flex items-center gap-3 transition-all
+        ${statusColors[job.status] || 'border-gray-700'}
+        ${selected ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-gray-950' : ''}
+      `}>
+        {onSelect && job.status !== 'applied' && (
+          <input
+            type="checkbox"
+            checked={selected || false}
+            onChange={() => onSelect(job.id)}
+            onClick={e => e.stopPropagation()}
+            className="w-4 h-4 shrink-0 rounded accent-indigo-500 cursor-pointer"
+          />
+        )}
+
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badge}`}>
+          {sourceLabel(job.source)}
+        </span>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-semibold text-white truncate">{job.title}</span>
+            {isNew && job.status === 'new' && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-600 text-white font-bold shrink-0">NEW</span>
+            )}
+            {job.status === 'saved' && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 font-medium shrink-0">Saved</span>
+            )}
+            {job.status === 'applied' && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300 font-medium shrink-0">Applied</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <span className="shrink-0">{job.company}</span>
+            {job.location && <span className="shrink-0 truncate">· {job.location}</span>}
+            {job.salary && <span className="text-green-400 shrink-0">{job.salary}</span>}
+          </div>
+        </div>
+
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
+          {job.relevance_score >= 8 && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">▲ Top</span>
+          )}
+          {job.relevance_score != null && (
+            <span className={`text-xs font-medium w-8 text-right ${
+              job.relevance_score >= 8 ? 'text-amber-400' :
+              job.relevance_score >= 6 ? 'text-lime-400' : 'text-gray-600'
+            }`}>{job.relevance_score}/10</span>
+          )}
+        </div>
+
+        {job.crawled_at && (
+          <span className="hidden xl:block text-xs text-gray-500 shrink-0 w-20 text-right">
+            {crawledAgo(job.crawled_at)}
+          </span>
+        )}
+
+        {job.status !== 'applied' ? (
+          <div className="flex gap-1.5 shrink-0">
+            <button onClick={() => onView && onView(job)}
+              className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors">View</button>
+            <button onClick={() => onStatusChange(job.id, 'saved')}
+              className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors">Save</button>
+            <button onClick={() => onStatusChange(job.id, 'denied')}
+              className="px-2.5 py-1 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg text-xs font-semibold transition-colors">Deny</button>
+            <button onClick={() => onApply(job)}
+              className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold transition-colors">Apply</button>
+          </div>
+        ) : null}
+
+        <a href={job.url} target="_blank" rel="noopener noreferrer"
+          className="shrink-0 text-gray-500 hover:text-gray-300 text-sm" title="Open original posting">↗</a>
+      </div>
+    )
+  }
+
+  // ── Normal (grid) card ───────────────────────────────────────────────────────
   return (
     <div className={`
       bg-gray-900 border rounded-xl p-4 space-y-3 transition-all
@@ -126,7 +237,6 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
       ${selected ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-gray-950' : ''}
     `}>
       <div className="flex items-start justify-between gap-2">
-        {/* Checkbox + meta */}
         <div className="flex items-start gap-2 flex-1 min-w-0">
           {onSelect && job.status !== 'applied' && (
             <input
@@ -142,6 +252,9 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
                 {sourceLabel(job.source)}
               </span>
+              {isNew && job.status === 'new' && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-600 text-white font-bold">NEW</span>
+              )}
               {job.relevance_score >= 8 && (
                 <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
                   ▲ Top Match
@@ -153,14 +266,10 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
                 </span>
               )}
               {job.status === 'applied' && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300 font-medium">
-                  Applied
-                </span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300 font-medium">Applied</span>
               )}
               {job.status === 'saved' && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 font-medium">
-                  Saved
-                </span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 font-medium">Saved</span>
               )}
             </div>
             <h3 className="text-base font-semibold text-white mt-1 leading-snug">{job.title}</h3>
@@ -174,9 +283,7 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
           rel="noopener noreferrer"
           className="shrink-0 text-gray-500 hover:text-gray-300 text-sm leading-none"
           title="Open original posting"
-        >
-          ↗
-        </a>
+        >↗</a>
       </div>
 
       <div className="flex flex-wrap gap-3 text-xs text-gray-400">
@@ -207,38 +314,21 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
           <button
             onClick={() => onApply(job)}
             className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold transition-colors"
-          >
-            Apply
-          </button>
+          >Apply</button>
           <button
-            onClick={() => setViewOpen(true)}
+            onClick={() => onView && onView(job)}
             className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
-          >
-            View
-          </button>
+          >View</button>
           <button
             onClick={() => onStatusChange(job.id, 'saved')}
             className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
-          >
-            Save
-          </button>
+          >Save</button>
           <button
             onClick={() => onStatusChange(job.id, 'denied')}
             className="flex-1 py-1.5 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg text-xs font-semibold transition-colors"
             title="Deny: permanently removes this job and blocks it from reappearing"
-          >
-            Deny
-          </button>
+          >Deny</button>
         </div>
-      )}
-
-      {viewOpen && (
-        <ViewModal
-          job={job}
-          cleanDesc={cleanDesc}
-          onClose={() => setViewOpen(false)}
-          onApply={onApply}
-        />
       )}
     </div>
   )
