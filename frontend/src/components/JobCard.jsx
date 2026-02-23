@@ -63,6 +63,7 @@ const crawledAgo = (iso) => {
   const mins  = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days  = Math.floor(diff / 86400000)
+  if (mins < 1)   return 'Crawled just now'
   if (mins < 60)  return `Crawled ${mins}m ago`
   if (hours < 24) return `Crawled ${hours}h ago`
   if (days < 7)   return `Crawled ${days}d ago`
