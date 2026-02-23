@@ -246,8 +246,8 @@ async def _async_crawl():
         total = 0
 
         # FAANG + AI company career pages
-        from crawlers.company import GREENHOUSE, LEVER, WORKDAY as _WORKDAY
-        crawl_state["total_sources"] = len(GREENHOUSE) + len(LEVER) + 1 + len(_WORKDAY) + 1 + 3
+        from crawlers.company import GREENHOUSE, ASHBY, LEVER, WORKDAY as _WORKDAY
+        crawl_state["total_sources"] = len(GREENHOUSE) + len(ASHBY) + len(LEVER) + 1 + len(_WORKDAY) + 1 + 3
         crawl_state["message"] = "Crawling company career pages..."
 
         def _on_company_start(name: str):

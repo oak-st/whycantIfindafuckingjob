@@ -32,6 +32,7 @@ const SOURCE_COLORS = {
   discord:     'bg-violet-800 text-violet-200',
   roblox:      'bg-red-900 text-red-200',
   fanduel:     'bg-blue-800 text-blue-200',
+  snowflake:   'bg-cyan-800 text-cyan-200',
 }
 
 // Pretty-print snake_case source: "scale_ai" → "Scale AI"

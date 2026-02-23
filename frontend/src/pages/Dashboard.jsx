@@ -436,7 +436,6 @@ export default function Dashboard() {
           </optgroup>
           <optgroup label="Consumer & Marketplace">
             <option value="airbnb">Airbnb</option>
-            <option value="doordash">DoorDash</option>
             <option value="lyft">Lyft</option>
             <option value="reddit">Reddit</option>
           </optgroup>

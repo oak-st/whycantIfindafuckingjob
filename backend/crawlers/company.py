@@ -30,7 +30,6 @@ _HEADERS = {
 GREENHOUSE: dict[str, str] = {
     # AI / research
     "Anthropic":     "anthropic",
-    "OpenAI":        "openai",
     "Scale AI":      "scaleai",
     "xAI":           "xai",
     "Databricks":    "databricks",
@@ -44,8 +43,6 @@ GREENHOUSE: dict[str, str] = {
     "MongoDB":       "mongodb",
     "Elastic":       "elastic",
     "Twilio":        "twilio",
-    "Snowflake":     "snowflake",
-    "Zoom":          "zoom",
     "Figma":         "figma",
     # Fintech / crypto
     "Stripe":        "stripe",
@@ -54,7 +51,6 @@ GREENHOUSE: dict[str, str] = {
     # Consumer / marketplace
     "Airbnb":        "airbnb",
     "Lyft":          "lyft",
-    "DoorDash":      "doordash",
     "Reddit":        "reddit",
     # Gaming / entertainment
     "Riot Games":    "riotgames",
@@ -65,6 +61,12 @@ GREENHOUSE: dict[str, str] = {
     "Discord":       "discord",
     # Sports betting / fintech
     "FanDuel":       "fanduel",
+}
+
+# Companies using Ashby ATS (public job board API)
+ASHBY: dict[str, str] = {
+    "OpenAI":    "openai",
+    "Snowflake": "snowflake",
 }
 
 LEVER: dict[str, str] = {
@@ -80,6 +82,7 @@ NETFLIX_API = "https://explore.jobs.netflix.net/api/apply/v2/jobs"
 WORKDAY: list[tuple[str, str, str, str]] = [
     ("Nvidia",      "nvidia.wd5",      "nvidia",      "NVIDIAExternalCareerSite"),
     ("CrowdStrike", "crowdstrike.wd5", "crowdstrike", "crowdstrikecareers"),
+    ("Zoom",        "zoom.wd5",        "zoom",        "Zoom"),
 ]
 
 
@@ -155,6 +158,22 @@ class CompanyCrawler:
                 await _delay()
             except Exception as e:
                 print(f"[Companies] {name} (greenhouse) error: {e}")
+                if on_done: on_done(name, 0, error=True)
+
+        # Ashby
+        for name, slug in ASHBY.items():
+            if _cancelled(): break
+            if on_start: on_start(name)
+            try:
+                found = await loop.run_in_executor(
+                    None, self._ashby, name, slug, keywords
+                )
+                jobs.extend(found)
+                print(f"[Companies] {name}: {len(found)} jobs")
+                if on_done: on_done(name, len(found))
+                await _delay()
+            except Exception as e:
+                print(f"[Companies] {name} (ashby) error: {e}")
                 if on_done: on_done(name, 0, error=True)
 
         # Lever
@@ -245,6 +264,34 @@ class CompanyCrawler:
                 "description": _strip_html(j.get("content", "")),
                 "url": j.get("absolute_url", ""),
                 "posted_date": (j.get("updated_at", "") or "")[:10],
+            })
+        return results
+
+    # ── Ashby ─────────────────────────────────────────────────────────────────
+
+    def _ashby(self, company: str, slug: str, keywords: list[str]) -> list[dict]:
+        url = f"https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true"
+        data = _get(url)
+        results = []
+        for j in data.get("jobs", []):
+            title = j.get("title", "")
+            loc = j.get("location") or ""
+            if j.get("isRemote"):
+                loc = loc or "Remote"
+            if not _location_ok(loc):
+                continue
+            salary = ""
+            comp = j.get("compensation") or {}
+            if comp.get("scrapeableCompensationSalarySummary"):
+                salary = comp["scrapeableCompensationSalarySummary"]
+            results.append({
+                "title": title,
+                "company": company,
+                "location": loc,
+                "salary": salary,
+                "description": _strip_html(j.get("descriptionHtml") or ""),
+                "url": j.get("jobUrl", ""),
+                "posted_date": (j.get("publishedAt") or "")[:10],
             })
         return results
 
