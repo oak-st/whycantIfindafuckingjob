@@ -49,6 +49,7 @@ class ApplySubmit(BaseModel):
 class SettingsIn(BaseModel):
     anthropic_api_key: Optional[str] = None
     search_keywords: Optional[str] = None  # comma-separated
+    exclude_keywords: Optional[str] = None  # comma-separated title exclusions
     search_location: Optional[str] = None
     work_type: Optional[str] = None  # remote | hybrid | onsite | any
     salary_min: Optional[int] = None
@@ -62,6 +63,7 @@ class SettingsIn(BaseModel):
 class SettingsOut(BaseModel):
     has_anthropic_api_key: bool
     search_keywords: str
+    exclude_keywords: str = ""
     search_location: str
     work_type: str
     resume_filename: str

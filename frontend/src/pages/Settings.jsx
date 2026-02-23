@@ -32,6 +32,7 @@ export default function Settings() {
   const [form, setForm] = useState({
     anthropic_api_key: '',
     search_keywords: 'IT Engineer, Senior IT Engineer, IT Systems Engineer',
+    exclude_keywords: '',
     search_location: 'United States',
     work_type: 'any',
     salary_min: '',
@@ -55,6 +56,7 @@ export default function Settings() {
         setForm(f => ({
           ...f,
           search_keywords: data.search_keywords || f.search_keywords,
+          exclude_keywords: data.exclude_keywords ?? '',
           search_location: data.search_location || f.search_location,
           work_type: data.work_type || 'any',
           salary_min: data.salary_min != null ? String(data.salary_min) : '',
@@ -79,6 +81,7 @@ export default function Settings() {
       const body = {}
       if (form.anthropic_api_key) body.anthropic_api_key = form.anthropic_api_key
       body.search_keywords = form.search_keywords
+      body.exclude_keywords = form.exclude_keywords
       body.search_location = form.search_location
       body.work_type = form.work_type
       if (form.salary_min !== '') body.salary_min = parseInt(form.salary_min, 10)
@@ -134,6 +137,9 @@ export default function Settings() {
       <Section title="Job Search Preferences">
         <Field label="Keywords (comma-separated)" value={form.search_keywords} onChange={set('search_keywords')}
           placeholder="IT Engineer, Senior IT Engineer" />
+        <Field label="Exclude keywords (comma-separated)" value={form.exclude_keywords} onChange={set('exclude_keywords')}
+          placeholder="intern, manager, director, staff"
+          hint="Jobs whose title contains any of these words will be skipped during crawl" />
         <Field label="Location" value={form.search_location} onChange={set('search_location')}
           placeholder="United States, Remote, New York..." />
         <div>

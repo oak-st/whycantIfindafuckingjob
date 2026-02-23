@@ -13,12 +13,12 @@ export default function Dashboard() {
   const [applyJob, setApplyJob] = useState(null)
   const [error, setError] = useState('')
 
-  // Feature 6 — search
   const [search, setSearch] = useState('')
-  // Feature 7 — bulk select
   const [selectedIds, setSelectedIds] = useState(new Set())
-  // Feature 8 — age filter
   const [ageFilter, setAgeFilter] = useState('all')
+  const [sort, setSort] = useState('date')
+  const [showHidden, setShowHidden] = useState(false)
+  const [hiddenJobs, setHiddenJobs] = useState([])
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -48,6 +48,37 @@ export default function Dashboard() {
     }
   }, [])
 
+  const fetchHiddenJobs = useCallback(async () => {
+    try {
+      const [deniedRes, skippedRes] = await Promise.all([
+        fetch(`${API}/jobs?status=denied`),
+        fetch(`${API}/jobs?status=skipped`),
+      ])
+      const denied = await deniedRes.json()
+      const skipped = await skippedRes.json()
+      setHiddenJobs([...denied, ...skipped])
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const parseSalaryMin = (salaryStr) => {
+    if (!salaryStr) return null
+    const s = salaryStr.toLowerCase()
+    const hourly = s.includes('/hr') || s.includes('per hour') || s.includes('/hour')
+    const cleaned = s.replace(/[$€£,]/g, '')
+    const nums = cleaned.match(/[\d]+(?:\.\d+)?k?/g)
+    if (!nums) return null
+    try {
+      const values = nums.map(n => n.endsWith('k') ? parseFloat(n) * 1000 : parseFloat(n))
+      let annual = Math.min(...values)
+      if (hourly) annual *= 2080
+      return annual
+    } catch {
+      return null
+    }
+  }
+
   useEffect(() => { fetchJobs() }, [fetchJobs])
 
   useEffect(() => {
@@ -58,6 +89,11 @@ export default function Dashboard() {
     }, POLL_INTERVAL)
     return () => clearInterval(interval)
   }, [fetchCrawlStatus, crawlState.status, fetchJobs])
+
+  useEffect(() => {
+    if (showHidden) fetchHiddenJobs()
+    else setHiddenJobs([])
+  }, [showHidden, fetchHiddenJobs])
 
   // Clear selection whenever filters change
   useEffect(() => { setSelectedIds(new Set()) }, [filter, search, ageFilter])
@@ -82,8 +118,19 @@ export default function Dashboard() {
       )
     }
 
+    if (sort === 'company') {
+      result = [...result].sort((a, b) => a.company.localeCompare(b.company))
+    } else if (sort === 'salary') {
+      result = [...result].sort((a, b) => {
+        const sa = parseSalaryMin(a.salary) ?? -1
+        const sb = parseSalaryMin(b.salary) ?? -1
+        return sb - sa
+      })
+    }
+    // 'date' — already sorted by crawled_at desc from the API
+
     return result
-  }, [jobs, search, ageFilter])
+  }, [jobs, search, ageFilter, sort])
 
   // ── Bulk select helpers ───────────────────────────────────────────────────────
   const selectableJobs = filteredJobs.filter(j => j.status !== 'applied' && j.status !== 'skipped')
@@ -137,6 +184,10 @@ export default function Dashboard() {
         body: JSON.stringify({ status }),
       })
       setJobs(js => js.map(j => j.id === jobId ? { ...j, status } : j))
+      if (hiddenJobs.some(j => j.id === jobId)) {
+        setHiddenJobs(hj => hj.filter(j => j.id !== jobId))
+        fetchJobs()
+      }
     } catch (e) {
       setError(e.message)
     }
@@ -149,19 +200,6 @@ export default function Dashboard() {
 
   const isCrawling = crawlState.status === 'running'
   const visibleCount = filteredJobs.filter(j => j.status !== 'skipped').length
-
-  const PLATFORM_SOURCES = new Set(['linkedin', 'glassdoor', 'indeed'])
-
-  // Derive company sources present in the current job list
-  const companySources = useMemo(() => {
-    const seen = new Set()
-    jobs.forEach(j => { if (!PLATFORM_SOURCES.has(j.source)) seen.add(j.source) })
-    return [...seen].sort()
-  }, [jobs])
-
-  // Pretty-print a snake_case source key: "scale_ai" → "Scale AI"
-  const sourceLabel = (key) =>
-    key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
   return (
     <div className="space-y-4">
@@ -234,40 +272,60 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Source — platforms */}
-        <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
-          {[
-            { key: 'all',       label: 'All' },
-            { key: 'linkedin',  label: 'LinkedIn' },
-            { key: 'glassdoor', label: 'Glassdoor' },
-            { key: 'indeed',    label: 'Indeed' },
-          ].map(({ key, label }) => (
-            <button key={key}
-              onClick={() => setFilter(f => ({ ...f, source: key }))}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                filter.source === key ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Source — companies (dynamic) */}
-        {companySources.length > 0 && (
-          <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1 flex-wrap">
-            {companySources.map(key => (
-              <button key={key}
-                onClick={() => setFilter(f => ({ ...f, source: key }))}
-                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                  filter.source === key ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {sourceLabel(key)}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Source — dropdown */}
+        <select
+          value={filter.source}
+          onChange={e => setFilter(f => ({ ...f, source: e.target.value }))}
+          className="bg-gray-900 border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-200
+                     focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+        >
+          <option value="all">All Sources</option>
+          <optgroup label="Platforms">
+            <option value="glassdoor">Glassdoor</option>
+            <option value="indeed">Indeed</option>
+          </optgroup>
+          <optgroup label="Companies">
+            <option value="airbnb">Airbnb</option>
+            <option value="amazon">Amazon</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="apple">Apple</option>
+            <option value="bungie">Bungie</option>
+            <option value="cloudflare">Cloudflare</option>
+            <option value="coinbase">Coinbase</option>
+            <option value="crowdstrike">CrowdStrike</option>
+            <option value="databricks">Databricks</option>
+            <option value="datadog">Datadog</option>
+            <option value="discord">Discord</option>
+            <option value="doordash">DoorDash</option>
+            <option value="elastic">Elastic</option>
+            <option value="epic_games">Epic Games</option>
+            <option value="fanduel">FanDuel</option>
+            <option value="figma">Figma</option>
+            <option value="google">Google</option>
+            <option value="lyft">Lyft</option>
+            <option value="microsoft">Microsoft</option>
+            <option value="mistral_ai">Mistral AI</option>
+            <option value="mongodb">MongoDB</option>
+            <option value="netflix">Netflix</option>
+            <option value="nvidia">Nvidia</option>
+            <option value="okta">Okta</option>
+            <option value="openai">OpenAI</option>
+            <option value="palantir">Palantir</option>
+            <option value="pure_storage">Pure Storage</option>
+            <option value="reddit">Reddit</option>
+            <option value="riot_games">Riot Games</option>
+            <option value="robinhood">Robinhood</option>
+            <option value="roblox">Roblox</option>
+            <option value="rubrik">Rubrik</option>
+            <option value="scale_ai">Scale AI</option>
+            <option value="snowflake">Snowflake</option>
+            <option value="stripe">Stripe</option>
+            <option value="twilio">Twilio</option>
+            <option value="xai">xAI</option>
+            <option value="zoom">Zoom</option>
+            <option value="zscaler">Zscaler</option>
+          </optgroup>
+        </select>
 
         {/* Feature 8 — Age filter */}
         <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
@@ -281,6 +339,24 @@ export default function Dashboard() {
               onClick={() => setAgeFilter(key)}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
                 ageFilter === key ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort */}
+        <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
+          {[
+            { key: 'date',    label: 'Date' },
+            { key: 'salary',  label: 'Salary' },
+            { key: 'company', label: 'Company' },
+          ].map(({ key, label }) => (
+            <button key={key}
+              onClick={() => setSort(key)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                sort === key ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
               {label}
@@ -305,8 +381,8 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Select-all + count */}
-        <div className="flex items-center gap-2 ml-auto">
+        {/* Select-all + count + show hidden */}
+        <div className="flex items-center gap-3 ml-auto">
           {selectableJobs.length > 0 && (
             <input
               type="checkbox"
@@ -317,6 +393,16 @@ export default function Dashboard() {
             />
           )}
           <span className="text-sm text-gray-500">{visibleCount} jobs</span>
+          <button
+            onClick={() => setShowHidden(h => !h)}
+            className={`text-xs px-3 py-1 rounded-lg border transition-colors ${
+              showHidden
+                ? 'border-indigo-600 text-indigo-400 bg-indigo-950'
+                : 'border-gray-700 text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            {showHidden ? 'Hide hidden' : 'Show hidden'}
+          </button>
         </div>
       </div>
 
@@ -390,6 +476,27 @@ export default function Dashboard() {
               onSelect={handleToggleSelect}
             />
           ))}
+        </div>
+      )}
+
+      {showHidden && hiddenJobs.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Hidden — {hiddenJobs.length} job{hiddenJobs.length !== 1 ? 's' : ''}
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {hiddenJobs.map(job => (
+              <JobCard
+                key={job.id}
+                job={job}
+                onStatusChange={handleStatusChange}
+                onApply={setApplyJob}
+                selected={false}
+                onSelect={null}
+                hidden={true}
+              />
+            ))}
+          </div>
         </div>
       )}
 

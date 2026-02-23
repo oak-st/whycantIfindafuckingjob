@@ -87,6 +87,18 @@ def _filter_by_keywords(jobs: list[dict], keywords: list[str]) -> list[dict]:
     return [j for j in jobs if _matches_keywords(j.get("title", ""), keywords)]
 
 
+def _filter_by_excluded_keywords(jobs: list[dict], exclude_keywords: list[str]) -> list[dict]:
+    """Drop jobs whose title contains any excluded keyword phrase (simple substring match)."""
+    if not exclude_keywords:
+        return jobs
+    result = []
+    for j in jobs:
+        title_lower = j.get("title", "").lower()
+        if not any(phrase.lower() in title_lower for phrase in exclude_keywords if phrase):
+            result.append(j)
+    return result
+
+
 def _parse_salary_min(salary_str: str) -> Optional[int]:
     """Extract the lower-bound annual salary from an unstructured string. Returns None if unparseable."""
     if not salary_str:
@@ -210,6 +222,7 @@ async def _async_crawl():
     try:
         settings = _load_settings(db)
         keywords = [k.strip() for k in settings.get("search_keywords", "IT Engineer").split(",") if k.strip()]
+        exclude_keywords = [k.strip() for k in settings.get("exclude_keywords", "").split(",") if k.strip()]
         location = settings.get("search_location", "United States")
         salary_min = int(settings["salary_min"]) if settings.get("salary_min") else None
         salary_max = int(settings["salary_max"]) if settings.get("salary_max") else None
@@ -225,6 +238,7 @@ async def _async_crawl():
             crawler = IndeedCrawler()
             jobs = await crawler.crawl(keywords, location, max_jobs=max_jobs, headless=headless)
             jobs = _filter_by_keywords(jobs, keywords)
+            jobs = _filter_by_excluded_keywords(jobs, exclude_keywords)
             print(f"[Crawl] Indeed after keyword filter: {len(jobs)} jobs")
             saved = _save_jobs(db, jobs, "indeed", salary_min, salary_max)
             total += saved
@@ -241,6 +255,7 @@ async def _async_crawl():
             crawler = CompanyCrawler()
             jobs = await crawler.crawl(keywords, location, max_jobs=max_jobs, headless=headless)
             jobs = _filter_by_keywords(jobs, keywords)
+            jobs = _filter_by_excluded_keywords(jobs, exclude_keywords)
             print(f"[Crawl] Companies after keyword filter: {len(jobs)} jobs")
             # Save each company under its own source key
             by_company: dict[str, list] = defaultdict(list)
@@ -393,6 +408,7 @@ def get_settings(db: Session = Depends(get_db)):
     return SettingsOut(
         has_anthropic_api_key=bool(s.get("anthropic_api_key_enc")),
         search_keywords=s.get("search_keywords", "IT Engineer, Senior IT Engineer, IT Systems Engineer"),
+        exclude_keywords=s.get("exclude_keywords", ""),
         search_location=s.get("search_location", "United States"),
         work_type=s.get("work_type", "any"),
         resume_filename=s.get("resume_filename", ""),
@@ -411,6 +427,8 @@ def save_settings(body: SettingsIn, db: Session = Depends(get_db)):
         _set(db, "anthropic_api_key_enc", encrypt(body.anthropic_api_key))
     if body.search_keywords is not None:
         _set(db, "search_keywords", body.search_keywords)
+    if body.exclude_keywords is not None:
+        _set(db, "exclude_keywords", body.exclude_keywords)
     if body.search_location is not None:
         _set(db, "search_location", body.search_location)
     if body.work_type is not None:

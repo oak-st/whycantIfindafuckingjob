@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 
 const SOURCE_COLORS = {
-  linkedin:    'bg-blue-900 text-blue-300',
   glassdoor:   'bg-green-900 text-green-300',
   indeed:      'bg-purple-900 text-purple-300',
   google:      'bg-red-900 text-red-300',
@@ -38,7 +37,7 @@ const SOURCE_COLORS = {
 const sourceLabel = (src) =>
   src.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
-export default function JobCard({ job, onStatusChange, onApply, selected, onSelect }) {
+export default function JobCard({ job, onStatusChange, onApply, selected, onSelect, hidden = false }) {
   const [expanded, setExpanded] = useState(false)
 
   const badge = SOURCE_COLORS[job.source] || 'bg-gray-800 text-gray-300'
@@ -50,7 +49,40 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
     denied:  'border-red-900 opacity-40',
   }
 
-  if (job.status === 'skipped' || job.status === 'denied') return null
+  if ((job.status === 'skipped' || job.status === 'denied') && !hidden) return null
+
+  if (hidden) {
+    return (
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3 opacity-50 hover:opacity-80 transition-opacity">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
+                {sourceLabel(job.source)}
+              </span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                job.status === 'denied' ? 'bg-red-950 text-red-400' : 'bg-gray-800 text-gray-500'
+              }`}>
+                {job.status}
+              </span>
+            </div>
+            <h3 className="text-sm font-semibold text-white mt-1 leading-snug">{job.title}</h3>
+            <p className="text-xs text-gray-400">{job.company}</p>
+          </div>
+          <a href={job.url} target="_blank" rel="noopener noreferrer"
+            className="shrink-0 text-xs text-indigo-400 hover:text-indigo-300 underline">
+            View
+          </a>
+        </div>
+        <button
+          onClick={() => onStatusChange(job.id, 'new')}
+          className="w-full py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
+        >
+          Undo
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className={`

@@ -11,6 +11,7 @@ function formatDate(iso) {
 export default function Applications() {
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState(null)
 
   useEffect(() => {
     fetch(`${API}/applications`)
@@ -45,43 +46,58 @@ export default function Applications() {
             </thead>
             <tbody>
               {apps.map(app => (
-                <tr key={app.id} className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
-                  <td className="px-4 py-3 text-white font-medium">{app.job?.title || '—'}</td>
-                  <td className="px-4 py-3 text-gray-300">{app.job?.company || '—'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      app.job?.source === 'linkedin'
-                        ? 'bg-blue-900 text-blue-300'
-                        : 'bg-green-900 text-green-300'
-                    }`}>
-                      {app.job?.source || '—'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400">{formatDate(app.applied_at)}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      app.status === 'submitted'
-                        ? 'bg-green-900 text-green-300'
-                        : app.status === 'error'
-                        ? 'bg-red-900 text-red-300'
-                        : 'bg-gray-800 text-gray-400'
-                    }`}>
-                      {app.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {app.job?.url && (
-                      <a
-                        href={app.job.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-indigo-400 hover:text-indigo-300 underline text-xs"
-                      >
-                        View
-                      </a>
-                    )}
-                  </td>
-                </tr>
+                <React.Fragment key={app.id}>
+                  <tr
+                    onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
+                    className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors cursor-pointer select-none"
+                  >
+                    <td className="px-4 py-3 text-white font-medium">{app.job?.title || '—'}</td>
+                    <td className="px-4 py-3 text-gray-300">{app.job?.company || '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        app.job?.source === 'glassdoor'
+                          ? 'bg-green-900 text-green-300'
+                          : 'bg-gray-800 text-gray-300'
+                      }`}>
+                        {app.job?.source || '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400">{formatDate(app.applied_at)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        app.status === 'submitted'
+                          ? 'bg-green-900 text-green-300'
+                          : app.status === 'error'
+                          ? 'bg-red-900 text-red-300'
+                          : 'bg-gray-800 text-gray-400'
+                      }`}>
+                        {app.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      {app.job?.url && (
+                        <a
+                          href={app.job.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-400 hover:text-indigo-300 underline text-xs"
+                        >
+                          View
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                  {expandedId === app.id && (
+                    <tr className="border-b border-gray-800 bg-gray-900/60">
+                      <td colSpan={6} className="px-4 py-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cover Letter</p>
+                        <pre className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed font-sans max-h-80 overflow-y-auto">
+                          {app.cover_letter || 'No cover letter saved.'}
+                        </pre>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
