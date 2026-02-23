@@ -445,7 +445,7 @@ export default function Dashboard() {
             <button key={s}
               onClick={() => setFilter(f => ({ ...f, status: s }))}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors capitalize ${
-                filter.status === s ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
+                filter.status === s ? 'bg-[#334155] text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
               {s}
@@ -531,7 +531,7 @@ export default function Dashboard() {
             <button key={key}
               onClick={() => setAgeFilter(key)}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                ageFilter === key ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
+                ageFilter === key ? 'bg-[#334155] text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
               {label}
@@ -550,7 +550,7 @@ export default function Dashboard() {
             <button key={key}
               onClick={() => setSort(key)}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                sort === key ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
+                sort === key ? 'bg-[#334155] text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
               {label}
@@ -564,14 +564,14 @@ export default function Dashboard() {
             onClick={() => setViewMode('grid')}
             title="Grid view"
             className={`px-2.5 py-1 rounded-lg text-sm transition-colors ${
-              viewMode === 'grid' ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
+              viewMode === 'grid' ? 'bg-[#334155] text-white' : 'text-slate-400 hover:text-white'
             }`}
           >⊞</button>
           <button
             onClick={() => setViewMode('list')}
             title="List view"
             className={`px-2.5 py-1 rounded-lg text-sm transition-colors ${
-              viewMode === 'list' ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
+              viewMode === 'list' ? 'bg-[#334155] text-white' : 'text-slate-400 hover:text-white'
             }`}
           >☰</button>
         </div>
@@ -633,7 +633,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => handleBulkAction('denied')}
-              className="px-3 py-1.5 text-xs bg-red-950 hover:bg-red-900 text-red-400 rounded-lg font-medium transition-colors"
+              className="px-3 py-1.5 text-xs bg-red-950 hover:bg-red-900 text-white rounded-lg font-medium transition-colors"
             >
               Deny all
             </button>
