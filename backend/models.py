@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON, SmallInteger
 from database import Base
 
 
@@ -17,6 +17,7 @@ class Job(Base):
     posted_date = Column(String, default="")
     status = Column(String, default="new")  # new | saved | skipped | applied
     crawled_at = Column(DateTime, default=datetime.utcnow)
+    relevance_score = Column(SmallInteger, nullable=True)  # 1-10, scored by AI after crawl
 
 
 class Application(Base):

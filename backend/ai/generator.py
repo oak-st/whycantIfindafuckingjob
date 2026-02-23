@@ -1,4 +1,5 @@
 """AI-powered cover letter and Q&A generation using Claude."""
+import re
 import anthropic
 
 
@@ -36,6 +37,39 @@ Instructions:
         messages=[{"role": "user", "content": prompt}],
     )
     return message.content[0].text.strip()
+
+
+async def score_job_relevance(
+    api_key: str,
+    job_title: str,
+    job_description: str,
+    keywords: list[str],
+    resume_text: str = "",
+) -> int:
+    """Return a relevance score 1–10 for how well a job matches the candidate."""
+    client = anthropic.AsyncAnthropic(api_key=api_key)
+
+    resume_section = f"\nCandidate resume excerpt: {resume_text[:600]}" if resume_text else ""
+
+    prompt = (
+        f"Rate how well this job matches the candidate. "
+        f"Reply with only a single integer from 1 to 10.\n\n"
+        f"Job title: {job_title}\n"
+        f"Job description: {job_description[:1200]}\n"
+        f"Candidate is looking for: {', '.join(keywords)}"
+        f"{resume_section}\n\n"
+        f"Score (1 = poor match, 10 = perfect match):"
+    )
+
+    message = await client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=5,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = message.content[0].text.strip()
+    match = re.search(r"\d+", raw)
+    score = int(match.group()) if match else 5
+    return max(1, min(10, score))
 
 
 async def generate_custom_answer(

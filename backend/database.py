@@ -21,3 +21,11 @@ def get_db():
 def init_db():
     from models import Job, Application, Setting  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    # Safe migration: add columns introduced after initial schema
+    from sqlalchemy import text, inspect
+    inspector = inspect(engine)
+    existing = {c["name"] for c in inspector.get_columns("jobs")}
+    with engine.connect() as conn:
+        if "relevance_score" not in existing:
+            conn.execute(text("ALTER TABLE jobs ADD COLUMN relevance_score INTEGER"))
+            conn.commit()

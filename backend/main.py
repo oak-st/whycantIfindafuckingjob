@@ -271,10 +271,58 @@ async def _async_crawl():
             import traceback; traceback.print_exc()
             print(f"[Crawl] Company pages error: {e}")
 
+        # AI relevance scoring for newly saved jobs
+        api_key = decrypt(settings.get("anthropic_api_key_enc", ""))
+        if api_key:
+            resume_path = UPLOADS_DIR / settings.get("resume_filename", "")
+            resume_text = resume_path.read_text(errors="ignore") if resume_path.exists() else ""
+            await _score_new_jobs(db, api_key, keywords, resume_text)
+
         crawl_state["message"] = f"Done — {total} new jobs found"
     finally:
         crawl_state["running"] = False
         db.close()
+
+
+async def _score_new_jobs(db: Session, api_key: str, keywords: list[str], resume_text: str):
+    """Score all unscored jobs that have descriptions, with limited concurrency."""
+    from ai.generator import score_job_relevance
+
+    unscored = db.query(Job).filter(
+        Job.relevance_score.is_(None),
+        Job.description != "",
+    ).all()
+
+    if not unscored:
+        return
+
+    crawl_state["message"] = f"Scoring {len(unscored)} job matches..."
+    print(f"[Score] Scoring {len(unscored)} unscored jobs...")
+
+    sem = asyncio.Semaphore(3)
+
+    async def _score_one(job):
+        async with sem:
+            try:
+                score = await score_job_relevance(
+                    api_key=api_key,
+                    job_title=job.title,
+                    job_description=job.description,
+                    keywords=keywords,
+                    resume_text=resume_text,
+                )
+                job.relevance_score = score
+                print(f"[Score] {job.title}: {score}/10")
+            except Exception as e:
+                print(f"[Score] Failed for '{job.title}': {e}")
+
+    await asyncio.gather(*[_score_one(j) for j in unscored])
+
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[Score] Commit failed: {e}")
 
 
 def _save_jobs(db: Session, jobs: list[dict], source: str,
@@ -291,6 +339,8 @@ def _save_jobs(db: Session, jobs: list[dict], source: str,
     for j in jobs:
         url = j.get("url", "").strip()
         if not url or url in seen_this_batch:
+            continue
+        if not j.get("salary", "").strip():
             continue
         if db.query(Job).filter(Job.url == url).first():
             continue

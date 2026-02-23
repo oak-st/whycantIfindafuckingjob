@@ -118,7 +118,9 @@ export default function Dashboard() {
       )
     }
 
-    if (sort === 'company') {
+    if (sort === 'relevance') {
+      result = [...result].sort((a, b) => (b.relevance_score ?? -1) - (a.relevance_score ?? -1))
+    } else if (sort === 'company') {
       result = [...result].sort((a, b) => a.company.localeCompare(b.company))
     } else if (sort === 'salary') {
       result = [...result].sort((a, b) => {
@@ -284,46 +286,60 @@ export default function Dashboard() {
             <option value="glassdoor">Glassdoor</option>
             <option value="indeed">Indeed</option>
           </optgroup>
-          <optgroup label="Companies">
-            <option value="airbnb">Airbnb</option>
-            <option value="amazon">Amazon</option>
+          <optgroup label="AI & Research">
             <option value="anthropic">Anthropic</option>
-            <option value="apple">Apple</option>
-            <option value="bungie">Bungie</option>
-            <option value="cloudflare">Cloudflare</option>
-            <option value="coinbase">Coinbase</option>
-            <option value="crowdstrike">CrowdStrike</option>
             <option value="databricks">Databricks</option>
-            <option value="datadog">Datadog</option>
-            <option value="discord">Discord</option>
-            <option value="doordash">DoorDash</option>
-            <option value="elastic">Elastic</option>
-            <option value="epic_games">Epic Games</option>
-            <option value="fanduel">FanDuel</option>
-            <option value="figma">Figma</option>
-            <option value="google">Google</option>
-            <option value="lyft">Lyft</option>
-            <option value="microsoft">Microsoft</option>
             <option value="mistral_ai">Mistral AI</option>
-            <option value="mongodb">MongoDB</option>
-            <option value="netflix">Netflix</option>
-            <option value="nvidia">Nvidia</option>
-            <option value="okta">Okta</option>
             <option value="openai">OpenAI</option>
-            <option value="palantir">Palantir</option>
-            <option value="pure_storage">Pure Storage</option>
-            <option value="reddit">Reddit</option>
-            <option value="riot_games">Riot Games</option>
-            <option value="robinhood">Robinhood</option>
-            <option value="roblox">Roblox</option>
-            <option value="rubrik">Rubrik</option>
             <option value="scale_ai">Scale AI</option>
-            <option value="snowflake">Snowflake</option>
-            <option value="stripe">Stripe</option>
-            <option value="twilio">Twilio</option>
             <option value="xai">xAI</option>
-            <option value="zoom">Zoom</option>
+          </optgroup>
+          <optgroup label="Big Tech">
+            <option value="amazon">Amazon</option>
+            <option value="apple">Apple</option>
+            <option value="google">Google</option>
+            <option value="microsoft">Microsoft</option>
+            <option value="nvidia">Nvidia</option>
+          </optgroup>
+          <optgroup label="Cybersecurity">
+            <option value="crowdstrike">CrowdStrike</option>
+            <option value="okta">Okta</option>
+            <option value="pure_storage">Pure Storage</option>
+            <option value="rubrik">Rubrik</option>
             <option value="zscaler">Zscaler</option>
+          </optgroup>
+          <optgroup label="Data & Cloud">
+            <option value="cloudflare">Cloudflare</option>
+            <option value="datadog">Datadog</option>
+            <option value="elastic">Elastic</option>
+            <option value="mongodb">MongoDB</option>
+            <option value="snowflake">Snowflake</option>
+          </optgroup>
+          <optgroup label="Fintech & Crypto">
+            <option value="coinbase">Coinbase</option>
+            <option value="fanduel">FanDuel</option>
+            <option value="robinhood">Robinhood</option>
+            <option value="stripe">Stripe</option>
+          </optgroup>
+          <optgroup label="Gaming & Entertainment">
+            <option value="bungie">Bungie</option>
+            <option value="discord">Discord</option>
+            <option value="epic_games">Epic Games</option>
+            <option value="netflix">Netflix</option>
+            <option value="riot_games">Riot Games</option>
+            <option value="roblox">Roblox</option>
+          </optgroup>
+          <optgroup label="SaaS & Dev Tools">
+            <option value="figma">Figma</option>
+            <option value="palantir">Palantir</option>
+            <option value="twilio">Twilio</option>
+            <option value="zoom">Zoom</option>
+          </optgroup>
+          <optgroup label="Consumer & Marketplace">
+            <option value="airbnb">Airbnb</option>
+            <option value="doordash">DoorDash</option>
+            <option value="lyft">Lyft</option>
+            <option value="reddit">Reddit</option>
           </optgroup>
         </select>
 
@@ -349,9 +365,10 @@ export default function Dashboard() {
         {/* Sort */}
         <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
           {[
-            { key: 'date',    label: 'Date' },
-            { key: 'salary',  label: 'Salary' },
-            { key: 'company', label: 'Company' },
+            { key: 'date',      label: 'Date' },
+            { key: 'relevance', label: 'Relevance' },
+            { key: 'salary',    label: 'Salary' },
+            { key: 'company',   label: 'Company' },
           ].map(({ key, label }) => (
             <button key={key}
               onClick={() => setSort(key)}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import ViewModal from './ViewModal'
 
 const SOURCE_COLORS = {
   glassdoor:   'bg-green-900 text-green-300',
@@ -37,8 +38,40 @@ const SOURCE_COLORS = {
 const sourceLabel = (src) =>
   src.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
+const stripHtml = (html) => {
+  if (!html) return ''
+  let text = html
+    .replace(/<\/(p|div|h[1-6]|li|tr|blockquote|section|article)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^ +/gm, '')
+  return text.trim()
+}
+
+const crawledAgo = (iso) => {
+  if (!iso) return null
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins < 60)  return `Crawled ${mins}m ago`
+  if (hours < 24) return `Crawled ${hours}h ago`
+  if (days < 7)   return `Crawled ${days}d ago`
+  return `Crawled ${new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+}
+
 export default function JobCard({ job, onStatusChange, onApply, selected, onSelect, hidden = false }) {
-  const [expanded, setExpanded] = useState(false)
+  const [viewOpen, setViewOpen] = useState(false)
+  const cleanDesc = stripHtml(job.description)
 
   const badge = SOURCE_COLORS[job.source] || 'bg-gray-800 text-gray-300'
   const statusColors = {
@@ -107,6 +140,16 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
                 {sourceLabel(job.source)}
               </span>
+              {job.relevance_score >= 8 && (
+                <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  ▲ Top Match
+                </span>
+              )}
+              {job.relevance_score >= 6 && job.relevance_score < 8 && (
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-lime-500/10 text-lime-400 border border-lime-500/20">
+                  Good Match
+                </span>
+              )}
               {job.status === 'applied' && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300 font-medium">
                   Applied
@@ -127,9 +170,10 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
           href={job.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 text-xs text-indigo-400 hover:text-indigo-300 underline"
+          className="shrink-0 text-gray-500 hover:text-gray-300 text-sm leading-none"
+          title="Open original posting"
         >
-          View
+          ↗
         </a>
       </div>
 
@@ -137,28 +181,23 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
         {job.location && <span>{job.location}</span>}
         {job.salary && <span className="text-green-400">{job.salary}</span>}
         {job.posted_date && <span>{job.posted_date}</span>}
+        {job.relevance_score != null && (
+          <span className={`font-medium ${
+            job.relevance_score >= 8 ? 'text-amber-400' :
+            job.relevance_score >= 6 ? 'text-lime-400' : 'text-gray-600'
+          }`}>
+            {job.relevance_score}/10
+          </span>
+        )}
+        {job.crawled_at && (
+          <span className="text-gray-500 ml-auto">{crawledAgo(job.crawled_at)}</span>
+        )}
       </div>
 
-      {job.description && (
-        <div>
-          {expanded ? (
-            <div className="text-xs text-gray-400 leading-relaxed space-y-1.5 max-h-64 overflow-y-auto pr-1">
-              {job.description.split('\n').filter(l => l.trim()).map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">
-              {job.description.replace(/\n+/g, ' ')}
-            </p>
-          )}
-          <button
-            onClick={() => setExpanded(e => !e)}
-            className="text-xs text-indigo-400 hover:text-indigo-300 mt-1"
-          >
-            {expanded ? 'Show less' : 'Show more'}
-          </button>
-        </div>
+      {cleanDesc && (
+        <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">
+          {cleanDesc}
+        </p>
       )}
 
       {job.status !== 'applied' && (
@@ -168,6 +207,12 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
             className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold transition-colors"
           >
             Apply
+          </button>
+          <button
+            onClick={() => setViewOpen(true)}
+            className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
+          >
+            View
           </button>
           <button
             onClick={() => onStatusChange(job.id, 'saved')}
@@ -189,6 +234,15 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
             Deny
           </button>
         </div>
+      )}
+
+      {viewOpen && (
+        <ViewModal
+          job={job}
+          cleanDesc={cleanDesc}
+          onClose={() => setViewOpen(false)}
+          onApply={onApply}
+        />
       )}
     </div>
   )

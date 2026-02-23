@@ -1,5 +1,24 @@
 import React, { useEffect, useState } from 'react'
 
+const stripHtml = (html) => {
+  if (!html) return ''
+  let text = html
+    .replace(/<\/(p|div|h[1-6]|li|tr|blockquote|section|article)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^ +/gm, '')
+  return text.trim()
+}
+
 const API = '/api'
 
 export default function ApplyModal({ job, onClose, onSubmitted }) {
@@ -64,7 +83,7 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
           {/* Job description */}
           <div className="w-1/2 border-r border-gray-800 p-5 overflow-y-auto">
             <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Job Description</h3>
-            <p className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{job.description || 'No description available.'}</p>
+            <p className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{stripHtml(job.description) || 'No description available.'}</p>
           </div>
 
           {/* Cover letter + answers */}

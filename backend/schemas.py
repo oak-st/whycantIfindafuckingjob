@@ -15,6 +15,7 @@ class JobOut(BaseModel):
     posted_date: str
     status: str
     crawled_at: datetime
+    relevance_score: Optional[int] = None
 
     model_config = {"from_attributes": True}
 
