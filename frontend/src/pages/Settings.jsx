@@ -5,24 +5,24 @@ const API = '/api'
 function Field({ label, type = 'text', value, onChange, placeholder, hint }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-zinc-300 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
       <input
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100
-                   placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+        className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-sm text-slate-100
+                   placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
       />
-      {hint && <p className="text-xs text-zinc-500 mt-1">{hint}</p>}
+      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
     </div>
   )
 }
 
 function Section({ title, children }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
-      <h2 className="text-base font-semibold text-zinc-200">{title}</h2>
+    <div className="bg-[#1c2026] border border-[#2a3241] rounded-xl p-5 space-y-4">
+      <h2 className="text-base font-semibold text-slate-200">{title}</h2>
       {children}
     </div>
   )
@@ -143,12 +143,12 @@ export default function Settings() {
         <Field label="Location" value={form.search_location} onChange={set('search_location')}
           placeholder="United States, Remote, New York..." />
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">Work Type</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Work Type</label>
           <select
             value={form.work_type}
             onChange={e => set('work_type')(e.target.value)}
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100
-                       focus:outline-none focus:ring-1 focus:ring-white/30"
+            className="bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-sm text-slate-100
+                       focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
           >
             <option value="any">Any</option>
             <option value="remote">Remote</option>
@@ -157,34 +157,34 @@ export default function Settings() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">Salary Range ($/yr) — skip jobs outside this range during crawl</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Salary Range ($/yr) — skip jobs outside this range during crawl</label>
           <div className="flex gap-3">
             <input
               type="number"
               value={form.salary_min}
               onChange={e => set('salary_min')(e.target.value)}
               placeholder="Min (e.g. 80000)"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100
-                         placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+              className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-sm text-slate-100
+                         placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
             />
             <input
               type="number"
               value={form.salary_max}
               onChange={e => set('salary_max')(e.target.value)}
               placeholder="Max (e.g. 150000)"
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100
-                         placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/30"
+              className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-sm text-slate-100
+                         placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
             />
           </div>
-          <p className="text-xs text-zinc-500 mt-1">Jobs with no listed salary are always included</p>
+          <p className="text-xs text-slate-500 mt-1">Jobs with no listed salary are always included</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">Max jobs per crawl</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Max jobs per crawl</label>
           <select
             value={form.max_jobs}
             onChange={e => set('max_jobs')(parseInt(e.target.value, 10))}
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100
-                       focus:outline-none focus:ring-1 focus:ring-white/30"
+            className="bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-sm text-slate-100
+                       focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
           >
             <option value={25}>25</option>
             <option value={50}>50 (default)</option>
@@ -199,18 +199,18 @@ export default function Settings() {
               id="auto_crawl"
               checked={form.auto_crawl_enabled}
               onChange={e => set('auto_crawl_enabled')(e.target.checked)}
-              className="w-4 h-4 rounded accent-white"
+              className="w-4 h-4 rounded accent-emerald-500"
             />
-            <label htmlFor="auto_crawl" className="text-sm font-medium text-zinc-300">Auto-crawl</label>
+            <label htmlFor="auto_crawl" className="text-sm font-medium text-slate-300">Auto-crawl</label>
           </div>
           {form.auto_crawl_enabled && (
             <div className="flex items-center gap-2 ml-7">
-              <label className="text-sm text-zinc-400">Every</label>
+              <label className="text-sm text-slate-400">Every</label>
               <select
                 value={form.auto_crawl_interval_hours}
                 onChange={e => set('auto_crawl_interval_hours')(parseInt(e.target.value, 10))}
-                className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100
-                           focus:outline-none focus:ring-1 focus:ring-white/30"
+                className="bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-sm text-slate-100
+                           focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
               >
                 <option value={6}>6 hours</option>
                 <option value={12}>12 hours</option>
@@ -226,13 +226,13 @@ export default function Settings() {
             id="show_browser"
             checked={form.show_browser}
             onChange={e => set('show_browser')(e.target.checked)}
-            className="w-4 h-4 mt-0.5 rounded accent-white"
+            className="w-4 h-4 mt-0.5 rounded accent-emerald-500"
           />
           <div>
-            <label htmlFor="show_browser" className="text-sm font-medium text-zinc-300">
+            <label htmlFor="show_browser" className="text-sm font-medium text-slate-300">
               Show browser while crawling
             </label>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Opens a visible browser window so you can watch the crawl in real time.
               Turn off for silent background crawls.
             </p>
@@ -249,20 +249,20 @@ export default function Settings() {
             type="file"
             accept=".pdf,.docx,.txt"
             onChange={e => setResumeFile(e.target.files[0] || null)}
-            className="text-sm text-zinc-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg
-                       file:border-0 file:text-sm file:bg-zinc-800 file:text-zinc-200
-                       hover:file:bg-zinc-700 cursor-pointer"
+            className="text-sm text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg
+                       file:border-0 file:text-sm file:bg-[#252d38] file:text-slate-200
+                       hover:file:bg-[#2e3845] cursor-pointer"
           />
           <button
             onClick={handleResumeUpload}
             disabled={!resumeFile || uploadingResume}
-            className="px-4 py-1.5 text-sm bg-white hover:bg-zinc-200 text-black disabled:opacity-40
+            className="px-4 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-40
                        rounded-lg font-medium transition-colors"
           >
             {uploadingResume ? 'Uploading...' : 'Upload'}
           </button>
         </div>
-        <p className="text-xs text-zinc-500">PDF, DOCX, or TXT — used for AI cover letter generation</p>
+        <p className="text-xs text-slate-500">PDF, DOCX, or TXT — used for AI cover letter generation</p>
       </Section>
 
       {error && <p className="text-sm text-red-400 bg-red-950 border border-red-900 rounded-lg px-4 py-2">{error}</p>}
@@ -270,7 +270,7 @@ export default function Settings() {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full py-2.5 bg-white hover:bg-zinc-200 text-black disabled:opacity-40
+        className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-40
                    rounded-xl font-semibold text-sm transition-colors"
       >
         {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}

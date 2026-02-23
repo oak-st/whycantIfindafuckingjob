@@ -30,48 +30,48 @@ export default function JobPanel({ job, onClose, onApply, onStatusChange }) {
       <div className="fixed inset-0 z-40 bg-black/60" onClick={onClose} />
 
       {/* Side panel */}
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-lg bg-zinc-900 border-l border-zinc-800 flex flex-col shadow-2xl">
+      <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-lg bg-[#1c2026] border-l border-[#2a3241] flex flex-col shadow-2xl">
 
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-4 border-b border-zinc-800 shrink-0">
+        <div className="flex items-start justify-between px-6 py-4 border-b border-[#2a3241] shrink-0">
           <div className="space-y-1 flex-1 min-w-0 pr-4">
             <h2 className="text-base font-bold text-white leading-snug">{job.title}</h2>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-slate-400">
               {job.company}{job.location ? ` · ${job.location}` : ''}
             </p>
             <div className="flex flex-wrap gap-3 pt-0.5 text-xs">
               {job.salary && <span className="text-green-400">{job.salary}</span>}
-              {job.posted_date && <span className="text-zinc-500">{job.posted_date}</span>}
+              {job.posted_date && <span className="text-slate-500">{job.posted_date}</span>}
               {job.relevance_score != null && (
                 <span className={`font-medium ${
                   job.relevance_score >= 8 ? 'text-amber-400' :
-                  job.relevance_score >= 6 ? 'text-lime-400' : 'text-zinc-600'
+                  job.relevance_score >= 6 ? 'text-lime-400' : 'text-slate-600'
                 }`}>{job.relevance_score}/10 relevance</span>
               )}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-500 hover:text-white text-xl leading-none shrink-0 mt-0.5 transition-colors"
+            className="text-slate-500 hover:text-white text-xl leading-none shrink-0 mt-0.5 transition-colors"
           >✕</button>
         </div>
 
         {/* Description */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {cleanDesc ? (
-            <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{cleanDesc}</p>
+            <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{cleanDesc}</p>
           ) : (
-            <p className="text-sm text-zinc-500 italic">No description available — open the original posting to view details.</p>
+            <p className="text-sm text-slate-500 italic">No description available — open the original posting to view details.</p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-zinc-800 flex items-center justify-between gap-4 shrink-0">
+        <div className="px-6 py-4 border-t border-[#2a3241] flex items-center justify-between gap-4 shrink-0">
           <a
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-zinc-300 hover:text-white underline transition-colors"
+            className="text-sm text-slate-300 hover:text-white underline transition-colors"
           >
             Open original posting ↗
           </a>
@@ -79,13 +79,13 @@ export default function JobPanel({ job, onClose, onApply, onStatusChange }) {
             <div className="flex gap-2">
               <button
                 onClick={() => { onStatusChange(job.id, 'saved'); onClose() }}
-                className="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm bg-[#252d38] hover:bg-[#2e3845] rounded-lg transition-colors"
               >
                 Save
               </button>
               <button
                 onClick={() => { onClose(); onApply(job) }}
-                className="px-5 py-2 text-sm bg-white hover:bg-zinc-200 text-black rounded-lg font-semibold transition-colors"
+                className="px-5 py-2 text-sm bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
               >
                 Apply
               </button>

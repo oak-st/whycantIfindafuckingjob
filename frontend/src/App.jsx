@@ -11,8 +11,8 @@ function NavItem({ to, label }) {
       className={({ isActive }) =>
         `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
           isActive
-            ? 'bg-white text-black'
-            : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            ? 'bg-emerald-500 text-white'
+            : 'text-slate-400 hover:text-slate-100 hover:bg-[#252d38]'
         }`
       }
     >
@@ -24,8 +24,8 @@ function NavItem({ to, label }) {
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-zinc-900 px-6 py-3 flex items-center gap-6">
-        <span className="text-lg font-bold text-white mr-4">Job Hunter</span>
+      <header className="border-b border-[#2a3241] px-6 py-3 flex items-center gap-6 bg-[#1c2026]">
+        <span className="text-lg font-bold text-slate-100 mr-4">Job Hunter</span>
         <nav className="flex gap-2">
           <NavItem to="/" label="Dashboard" />
           <NavItem to="/applications" label="Applications" />

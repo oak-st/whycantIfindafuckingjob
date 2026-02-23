@@ -277,16 +277,16 @@ export default function Dashboard() {
         <div>
           <h1 className="text-xl font-bold text-white">Job Feed</h1>
           {isCrawling && (
-            <p className="text-sm text-zinc-300 mt-0.5">
+            <p className="text-sm text-slate-300 mt-0.5">
               <span className="inline-block animate-spin mr-1">⟳</span>
               {crawlState.message} ({crawlState.jobs_found} new)
             </p>
           )}
           {!isCrawling && crawlState.message !== 'Idle' && (
-            <p className="text-sm text-zinc-400 mt-0.5">{crawlState.message}</p>
+            <p className="text-sm text-slate-400 mt-0.5">{crawlState.message}</p>
           )}
           {!isCrawling && crawlState.next_crawl_at && (
-            <p className="text-sm text-zinc-500 mt-0.5">
+            <p className="text-sm text-slate-500 mt-0.5">
               Next auto-crawl: {new Date(crawlState.next_crawl_at).toLocaleString()}
             </p>
           )}
@@ -303,7 +303,7 @@ export default function Dashboard() {
           <button
             onClick={startCrawl}
             disabled={isCrawling}
-            className="px-5 py-2 bg-white hover:bg-zinc-200 text-black disabled:opacity-50
+            className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-50
                        rounded-xl text-sm font-semibold transition-colors"
           >
             {isCrawling ? 'Crawling...' : 'Crawl Now'}
@@ -326,7 +326,7 @@ export default function Dashboard() {
             <button
               onClick={() => setConfirmClear(true)}
               disabled={isCrawling}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-zinc-400 hover:text-zinc-200
+              className="px-4 py-2 bg-[#252d38] hover:bg-[#2e3845] disabled:opacity-50 text-slate-400 hover:text-slate-200
                          rounded-xl text-sm transition-colors"
               title="Delete all crawled jobs"
             >
@@ -338,7 +338,7 @@ export default function Dashboard() {
 
       {/* Live crawl log */}
       {(isCrawling || crawlState.log?.length > 0) && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+        <div className="bg-[#1c2026] border border-[#2a3241] rounded-xl overflow-hidden">
           {/* Header + progress bar */}
           {!isCrawling && crawlState.log?.length > 0 ? (
             <div className={`px-4 py-3 border-b flex items-center justify-between ${
@@ -356,24 +356,24 @@ export default function Dashboard() {
               </div>
               <div className="text-right">
                 <span className="text-sm font-bold text-white">{crawlState.jobs_found} new {crawlState.jobs_found === 1 ? 'job' : 'jobs'} saved</span>
-                <span className="text-xs text-zinc-500 ml-2">across {crawlState.log.length} sources</span>
+                <span className="text-xs text-slate-500 ml-2">across {crawlState.log.length} sources</span>
               </div>
             </div>
           ) : (
-            <div className="px-4 pt-3 pb-2 border-b border-zinc-800 space-y-2">
+            <div className="px-4 pt-3 pb-2 border-b border-[#2a3241] space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Crawl Progress</span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Crawl Progress</span>
+                <span className="text-xs text-slate-500">
                   {crawlState.log?.length || 0} / {crawlState.total_sources || '—'} sources
                   {crawlState.total_sources > 0 && (
-                    <span className="ml-1 text-zinc-400 font-medium">
+                    <span className="ml-1 text-slate-400 font-medium">
                       ({Math.round(((crawlState.log?.length || 0) / crawlState.total_sources) * 100)}%)
                     </span>
                   )}
                 </span>
               </div>
               {crawlState.total_sources > 0 && (
-                <div className="w-full bg-zinc-800 rounded-full h-1.5">
+                <div className="w-full bg-[#252d38] rounded-full h-1.5">
                   <div
                     className="bg-zinc-200 h-1.5 rounded-full transition-all duration-500"
                     style={{ width: `${Math.round(((crawlState.log?.length || 0) / crawlState.total_sources) * 100)}%` }}
@@ -396,16 +396,16 @@ export default function Dashboard() {
                       ? <span className="text-red-400 shrink-0">✕</span>
                       : <span className="text-green-400 shrink-0">✓</span>
                     }
-                    <span className={entry.error ? 'text-red-300' : 'text-zinc-300'}>{entry.source}</span>
+                    <span className={entry.error ? 'text-red-300' : 'text-slate-300'}>{entry.source}</span>
                   </span>
                   {pct !== null && (
-                    <span className="text-zinc-600 shrink-0">{pct}%</span>
+                    <span className="text-slate-600 shrink-0">{pct}%</span>
                   )}
                 </div>
               )
             })}
             {crawlState.current_source && (
-              <div className="flex items-center gap-2 text-zinc-300">
+              <div className="flex items-center gap-2 text-slate-300">
                 <span className="inline-block animate-spin shrink-0">⟳</span>
                 <span>{crawlState.current_source}</span>
               </div>
@@ -415,7 +415,7 @@ export default function Dashboard() {
       )}
 
       <div className="relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none"
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"
           fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
         </svg>
@@ -424,13 +424,13 @@ export default function Dashboard() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search title, company, location, description..."
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-8 py-2 text-sm
-                     text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/30"
+          className="w-full bg-[#1c2026] border border-[#2a3241] rounded-xl pl-9 pr-8 py-2 text-sm
+                     text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 text-lg leading-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-lg leading-none"
           >
             ×
           </button>
@@ -440,12 +440,12 @@ export default function Dashboard() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         {/* Status */}
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+        <div className="flex gap-1 bg-[#1c2026] border border-[#2a3241] rounded-xl p-1">
           {['all', 'new', 'saved', 'applied'].map(s => (
             <button key={s}
               onClick={() => setFilter(f => ({ ...f, status: s }))}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors capitalize ${
-                filter.status === s ? 'bg-white text-white' : 'text-zinc-400 hover:text-white'
+                filter.status === s ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
               {s}
@@ -457,8 +457,8 @@ export default function Dashboard() {
         <select
           value={filter.source}
           onChange={e => setFilter(f => ({ ...f, source: e.target.value }))}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-zinc-200
-                     focus:outline-none focus:ring-2 focus:ring-white/30 cursor-pointer"
+          className="bg-[#1c2026] border border-[#2a3241] rounded-xl px-3 py-1.5 text-xs text-slate-200
+                     focus:outline-none focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
         >
           <option value="all">All Sources{jobs.length ? ` (${jobs.length})` : ''}</option>
           <optgroup label="Platforms">
@@ -521,7 +521,7 @@ export default function Dashboard() {
         </select>
 
         {/* Age filter */}
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+        <div className="flex gap-1 bg-[#1c2026] border border-[#2a3241] rounded-xl p-1">
           {[
             { key: 'all', label: 'All time' },
             { key: '7',   label: '7d' },
@@ -531,7 +531,7 @@ export default function Dashboard() {
             <button key={key}
               onClick={() => setAgeFilter(key)}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                ageFilter === key ? 'bg-white text-white' : 'text-zinc-400 hover:text-white'
+                ageFilter === key ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
               {label}
@@ -540,7 +540,7 @@ export default function Dashboard() {
         </div>
 
         {/* Sort */}
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+        <div className="flex gap-1 bg-[#1c2026] border border-[#2a3241] rounded-xl p-1">
           {[
             { key: 'date',      label: 'Date' },
             { key: 'relevance', label: 'Relevance' },
@@ -550,7 +550,7 @@ export default function Dashboard() {
             <button key={key}
               onClick={() => setSort(key)}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                sort === key ? 'bg-white text-white' : 'text-zinc-400 hover:text-white'
+                sort === key ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
               {label}
@@ -559,19 +559,19 @@ export default function Dashboard() {
         </div>
 
         {/* View mode toggle */}
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+        <div className="flex gap-1 bg-[#1c2026] border border-[#2a3241] rounded-xl p-1">
           <button
             onClick={() => setViewMode('grid')}
             title="Grid view"
             className={`px-2.5 py-1 rounded-lg text-sm transition-colors ${
-              viewMode === 'grid' ? 'bg-white text-white' : 'text-zinc-400 hover:text-white'
+              viewMode === 'grid' ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
             }`}
           >⊞</button>
           <button
             onClick={() => setViewMode('list')}
             title="List view"
             className={`px-2.5 py-1 rounded-lg text-sm transition-colors ${
-              viewMode === 'list' ? 'bg-white text-white' : 'text-zinc-400 hover:text-white'
+              viewMode === 'list' ? 'bg-white text-white' : 'text-slate-400 hover:text-white'
             }`}
           >☰</button>
         </div>
@@ -581,15 +581,15 @@ export default function Dashboard() {
           <input type="number" value={filter.salary_min}
             onChange={e => setFilter(f => ({ ...f, salary_min: e.target.value }))}
             placeholder="Min $"
-            className="w-24 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-100
-                       placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/30"
+            className="w-24 bg-[#1c2026] border border-[#2a3241] rounded-lg px-2 py-1 text-xs text-slate-100
+                       placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           />
-          <span className="text-zinc-600 text-xs">–</span>
+          <span className="text-slate-600 text-xs">–</span>
           <input type="number" value={filter.salary_max}
             onChange={e => setFilter(f => ({ ...f, salary_max: e.target.value }))}
             placeholder="Max $"
-            className="w-24 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-100
-                       placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/30"
+            className="w-24 bg-[#1c2026] border border-[#2a3241] rounded-lg px-2 py-1 text-xs text-slate-100
+                       placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           />
         </div>
 
@@ -601,16 +601,16 @@ export default function Dashboard() {
               checked={allSelected}
               onChange={toggleSelectAll}
               title="Select all visible"
-              className="w-4 h-4 rounded accent-white cursor-pointer"
+              className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
             />
           )}
-          <span className="text-sm text-zinc-500">{visibleCount} jobs</span>
+          <span className="text-sm text-slate-500">{visibleCount} jobs</span>
           <button
             onClick={() => setShowHidden(h => !h)}
             className={`text-xs px-3 py-1 rounded-lg border transition-colors ${
               showHidden
-                ? 'border-zinc-500 text-zinc-300 bg-zinc-900'
-                : 'border-zinc-700 text-zinc-500 hover:text-zinc-300'
+                ? 'border-[#4a5a6a] text-slate-300 bg-[#1c2026]'
+                : 'border-[#334155] text-slate-500 hover:text-slate-300'
             }`}
           >
             {showHidden ? 'Hide hidden' : 'Show hidden'}
@@ -620,14 +620,14 @@ export default function Dashboard() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5">
-          <span className="text-sm text-zinc-200 font-medium">
+        <div className="flex items-center gap-3 bg-[#1c2026] border border-[#334155] rounded-xl px-4 py-2.5">
+          <span className="text-sm text-slate-200 font-medium">
             {selectedIds.size} selected
           </span>
           <div className="flex gap-2 ml-auto">
             <button
               onClick={() => handleBulkAction('saved')}
-              className="px-3 py-1.5 text-xs bg-zinc-700 hover:bg-white rounded-lg font-medium transition-colors"
+              className="px-3 py-1.5 text-xs bg-[#2e3845] hover:bg-white rounded-lg font-medium transition-colors"
             >
               Save all
             </button>
@@ -639,7 +639,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setSelectedIds(new Set())}
-              className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+              className="px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
             >
               Clear
             </button>
@@ -653,13 +653,13 @@ export default function Dashboard() {
 
       {/* Job grid / list */}
       {loading ? (
-        <div className="text-center text-zinc-500 py-20">Loading...</div>
+        <div className="text-center text-slate-500 py-20">Loading...</div>
       ) : filteredJobs.length === 0 ? (
-        <div className="text-center text-zinc-500 py-20">
+        <div className="text-center text-slate-500 py-20">
           {search ? (
             <>
               <p className="text-lg mb-2">No results for "{search}"</p>
-              <button onClick={() => setSearch('')} className="text-sm text-zinc-300 hover:text-white">
+              <button onClick={() => setSearch('')} className="text-sm text-slate-300 hover:text-white">
                 Clear search
               </button>
             </>
@@ -705,7 +705,7 @@ export default function Dashboard() {
 
       {showHidden && hiddenJobs.length > 0 && (
         <div className="space-y-3">
-          <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
             Hidden — {hiddenJobs.length} job{hiddenJobs.length !== 1 ? 's' : ''}
           </p>
           <div className={viewMode === 'list'

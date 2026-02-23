@@ -68,28 +68,28 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+      <div className="bg-[#1c2026] border border-[#2a3241] rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a3241]">
           <div>
             <h2 className="text-base font-bold text-white">{job.title}</h2>
-            <p className="text-sm text-zinc-400">{job.company} · {job.location}</p>
+            <p className="text-sm text-slate-400">{job.company} · {job.location}</p>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white text-xl leading-none transition-colors">✕</button>
+          <button onClick={onClose} className="text-slate-500 hover:text-white text-xl leading-none transition-colors">✕</button>
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-hidden flex gap-0">
           {/* Job description */}
-          <div className="w-1/2 border-r border-zinc-800 p-5 overflow-y-auto">
-            <h3 className="text-xs font-semibold text-zinc-500 uppercase mb-2">Job Description</h3>
-            <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">{stripHtml(job.description) || 'No description available.'}</p>
+          <div className="w-1/2 border-r border-[#2a3241] p-5 overflow-y-auto">
+            <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2">Job Description</h3>
+            <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">{stripHtml(job.description) || 'No description available.'}</p>
           </div>
 
           {/* Cover letter + answers */}
           <div className="w-1/2 p-5 overflow-y-auto space-y-4">
             {loading && (
-              <div className="flex items-center gap-2 text-sm text-zinc-400">
+              <div className="flex items-center gap-2 text-sm text-slate-400">
                 <span className="animate-spin">⟳</span> Generating cover letter with AI...
               </div>
             )}
@@ -97,23 +97,23 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
             {!loading && draft && (
               <>
                 <div>
-                  <h3 className="text-xs font-semibold text-zinc-500 uppercase mb-2">Cover Letter</h3>
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2">Cover Letter</h3>
                   <textarea
                     value={draft.cover_letter}
                     onChange={e => setDraft(d => ({ ...d, cover_letter: e.target.value }))}
                     rows={10}
                     placeholder="Cover letter will appear here. You can edit it before submitting."
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-100
-                               placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/30 resize-none leading-relaxed"
+                    className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-xs text-slate-100
+                               placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 resize-none leading-relaxed"
                   />
                 </div>
 
                 {Object.keys(draft.custom_answers).length > 0 && (
                   <div className="space-y-3">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase">Custom Questions</h3>
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase">Custom Questions</h3>
                     {Object.entries(draft.custom_answers).map(([q, a]) => (
                       <div key={q}>
-                        <p className="text-xs text-zinc-400 mb-1">{q}</p>
+                        <p className="text-xs text-slate-400 mb-1">{q}</p>
                         <textarea
                           value={a}
                           onChange={e => setDraft(d => ({
@@ -121,8 +121,8 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
                             custom_answers: { ...d.custom_answers, [q]: e.target.value }
                           }))}
                           rows={3}
-                          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs
-                                     text-zinc-100 focus:outline-none focus:ring-1 focus:ring-white/30 resize-none"
+                          className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-xs
+                                     text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 resize-none"
                         />
                       </div>
                     ))}
@@ -138,26 +138,26 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-zinc-800 flex items-center justify-between gap-4">
+        <div className="px-6 py-4 border-t border-[#2a3241] flex items-center justify-between gap-4">
           <a
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-zinc-300 hover:text-white underline transition-colors"
+            className="text-sm text-slate-300 hover:text-white underline transition-colors"
           >
             Open original posting
           </a>
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm bg-[#252d38] hover:bg-[#2e3845] rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={submitting || loading || !draft}
-              className="px-5 py-2 text-sm bg-white hover:bg-zinc-200 text-black disabled:opacity-40
+              className="px-5 py-2 text-sm bg-emerald-500 hover:bg-emerald-400 text-white disabled:opacity-40
                          rounded-lg font-semibold transition-colors"
             >
               {submitting ? 'Submitting...' : 'Submit Application'}
