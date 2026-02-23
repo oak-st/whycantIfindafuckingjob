@@ -1,0 +1,38 @@
+# Secrets & environment
+.env
+*.env
+
+# Databases (contain personal data & encrypted credentials)
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploaded files (resume, personal docs)
+uploads/
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
