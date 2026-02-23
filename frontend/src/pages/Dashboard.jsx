@@ -322,7 +322,6 @@ export default function Dashboard() {
           <option value="all">All Sources</option>
           <optgroup label="Platforms">
             <option value="glassdoor">Glassdoor</option>
-            <option value="indeed">Indeed</option>
           </optgroup>
           <optgroup label="AI & Research">
             <option value="anthropic">Anthropic</option>

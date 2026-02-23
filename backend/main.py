@@ -235,27 +235,6 @@ async def _async_crawl():
 
         total = 0
 
-        # Indeed
-        crawl_state["message"] = "Crawling Indeed..."
-        crawl_state["current_source"] = "Indeed"
-        try:
-            from crawlers.indeed import IndeedCrawler
-            crawler = IndeedCrawler()
-            jobs = await crawler.crawl(keywords, location, max_jobs=max_jobs, headless=headless)
-            jobs = _filter_by_keywords(jobs, keywords)
-            jobs = _filter_by_excluded_keywords(jobs, exclude_keywords)
-            print(f"[Crawl] Indeed after keyword filter: {len(jobs)} jobs")
-            saved = _save_jobs(db, jobs, "indeed", salary_min, salary_max)
-            total += saved
-            crawl_state["jobs_found"] = total
-            crawl_state["log"].append({"source": "Indeed", "count": saved, "error": False})
-        except Exception as e:
-            crawl_state["log"].append({"source": "Indeed", "count": 0, "error": True})
-            import traceback; traceback.print_exc()
-            print(f"[Crawl] Indeed error: {e}")
-        finally:
-            crawl_state["current_source"] = None
-
         # FAANG + AI company career pages
         crawl_state["message"] = "Crawling company career pages..."
 
@@ -359,8 +338,6 @@ def _save_jobs(db: Session, jobs: list[dict], source: str,
     for j in jobs:
         url = j.get("url", "").strip()
         if not url or url in seen_this_batch:
-            continue
-        if not j.get("salary", "").strip():
             continue
         if db.query(Job).filter(Job.url == url).first():
             continue
