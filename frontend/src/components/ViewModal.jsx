@@ -73,7 +73,7 @@ export default function JobPanel({ job, onClose, onApply, onStatusChange }) {
             rel="noopener noreferrer"
             className="text-sm text-slate-300 hover:text-white underline transition-colors"
           >
-            Open original posting ↗
+            Open original posting
           </a>
           {job.status !== 'applied' && (
             <div className="flex gap-2">

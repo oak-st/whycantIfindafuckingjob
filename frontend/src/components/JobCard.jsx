@@ -1,5 +1,13 @@
 import React from 'react'
 
+const ExternalLinkIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+  </svg>
+)
+
 const SOURCE_COLORS = {
   glassdoor:   'bg-green-950 text-green-400',
   indeed:      'bg-purple-950 text-purple-400',
@@ -109,7 +117,9 @@ export default function JobCard({
             </button>
           )}
           <a href={job.url} target="_blank" rel="noopener noreferrer"
-            className="shrink-0 text-slate-500 hover:text-slate-300 text-sm">↗</a>
+            className="shrink-0 p-1 text-slate-500 hover:text-slate-300 transition-colors" title="Open original posting">
+            <ExternalLinkIcon className="w-4 h-4" />
+          </a>
           <button
             onClick={() => onStatusChange(job.id, 'new')}
             className="shrink-0 px-2.5 py-1 bg-[#252d38] hover:bg-[#2e3845] rounded-lg text-xs font-semibold transition-colors"
@@ -140,7 +150,9 @@ export default function JobCard({
               </button>
             )}
             <a href={job.url} target="_blank" rel="noopener noreferrer"
-              className="text-slate-500 hover:text-slate-300 text-sm">↗</a>
+              className="p-1 text-slate-500 hover:text-slate-300 transition-colors" title="Open original posting">
+              <ExternalLinkIcon className="w-4 h-4" />
+            </a>
           </div>
         </div>
         <button
@@ -228,7 +240,9 @@ export default function JobCard({
           )}
           <a href={job.url} target="_blank" rel="noopener noreferrer"
             onClick={sp(() => {})}
-            className="text-slate-500 hover:text-slate-300 text-sm" title="Open original posting">↗</a>
+            className="p-1 text-slate-500 hover:text-slate-300 transition-colors" title="Open original posting">
+            <ExternalLinkIcon className="w-4 h-4" />
+          </a>
         </div>
       </div>
     )
@@ -288,9 +302,9 @@ export default function JobCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={sp(() => {})}
-            className="text-slate-500 hover:text-slate-300 text-sm leading-none"
+            className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
             title="Open original posting"
-          >↗</a>
+          ><ExternalLinkIcon className="w-4 h-4" /></a>
         </div>
       </div>
 
