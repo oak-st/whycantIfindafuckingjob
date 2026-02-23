@@ -76,8 +76,16 @@ class SettingsOut(BaseModel):
     show_browser: bool = False
 
 
+class CrawlLogEntry(BaseModel):
+    source: str
+    count: int
+    error: bool = False
+
+
 class CrawlStatus(BaseModel):
     status: str
     message: str
     jobs_found: int = 0
     next_crawl_at: Optional[str] = None
+    current_source: Optional[str] = None
+    log: list[CrawlLogEntry] = []

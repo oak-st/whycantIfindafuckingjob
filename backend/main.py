@@ -39,7 +39,7 @@ app.add_middleware(
 )
 
 # Track crawl state
-crawl_state = {"running": False, "message": "Idle", "jobs_found": 0}
+crawl_state = {"running": False, "message": "Idle", "jobs_found": 0, "log": [], "current_source": None}
 
 scheduler = AsyncIOScheduler()
 
@@ -203,6 +203,8 @@ def get_crawl_status():
         message=crawl_state["message"],
         jobs_found=crawl_state["jobs_found"],
         next_crawl_at=next_crawl_at,
+        current_source=crawl_state.get("current_source"),
+        log=crawl_state.get("log", []),
     )
 
 
@@ -217,6 +219,8 @@ async def start_crawl(background_tasks: BackgroundTasks):
 async def _async_crawl():
     crawl_state["running"] = True
     crawl_state["jobs_found"] = 0
+    crawl_state["log"] = []
+    crawl_state["current_source"] = None
 
     db = next(get_db())
     try:
@@ -233,6 +237,7 @@ async def _async_crawl():
 
         # Indeed
         crawl_state["message"] = "Crawling Indeed..."
+        crawl_state["current_source"] = "Indeed"
         try:
             from crawlers.indeed import IndeedCrawler
             crawler = IndeedCrawler()
@@ -243,17 +248,32 @@ async def _async_crawl():
             saved = _save_jobs(db, jobs, "indeed", salary_min, salary_max)
             total += saved
             crawl_state["jobs_found"] = total
+            crawl_state["log"].append({"source": "Indeed", "count": saved, "error": False})
         except Exception as e:
+            crawl_state["log"].append({"source": "Indeed", "count": 0, "error": True})
             import traceback; traceback.print_exc()
             print(f"[Crawl] Indeed error: {e}")
+        finally:
+            crawl_state["current_source"] = None
 
         # FAANG + AI company career pages
         crawl_state["message"] = "Crawling company career pages..."
+
+        def _on_company_start(name: str):
+            crawl_state["current_source"] = name
+
+        def _on_company_done(name: str, count: int, error: bool = False):
+            crawl_state["log"].append({"source": name, "count": count, "error": error})
+            crawl_state["current_source"] = None
+
         try:
             from crawlers.company import CompanyCrawler
             from collections import defaultdict
             crawler = CompanyCrawler()
-            jobs = await crawler.crawl(keywords, location, max_jobs=max_jobs, headless=headless)
+            jobs = await crawler.crawl(
+                keywords, location, max_jobs=max_jobs, headless=headless,
+                on_start=_on_company_start, on_done=_on_company_done,
+            )
             jobs = _filter_by_keywords(jobs, keywords)
             jobs = _filter_by_excluded_keywords(jobs, exclude_keywords)
             print(f"[Crawl] Companies after keyword filter: {len(jobs)} jobs")

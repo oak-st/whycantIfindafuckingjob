@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import JobCard from '../components/JobCard'
 import ApplyModal from '../components/ApplyModal'
 
@@ -200,6 +200,11 @@ export default function Dashboard() {
     setApplyJob(null)
   }
 
+  const logRef = useRef(null)
+  useEffect(() => {
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
+  }, [crawlState.log, crawlState.current_source])
+
   const isCrawling = crawlState.status === 'running'
   const visibleCount = filteredJobs.filter(j => j.status !== 'skipped').length
 
@@ -234,7 +239,40 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Feature 6 — Search bar */}
+      {/* Live crawl log */}
+      {(isCrawling || crawlState.log?.length > 0) && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="px-4 py-2 border-b border-gray-800 flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Crawl Log</span>
+            <span className="text-xs text-gray-600">
+              {crawlState.log?.length || 0} sources · {crawlState.jobs_found} new jobs
+            </span>
+          </div>
+          <div ref={logRef} className="max-h-52 overflow-y-auto px-4 py-3 space-y-1 font-mono text-xs">
+            {crawlState.log?.map((entry, i) => (
+              <div key={i} className="flex items-center justify-between gap-4">
+                <span className="flex items-center gap-2 min-w-0">
+                  {entry.error
+                    ? <span className="text-red-400 shrink-0">✕</span>
+                    : <span className="text-green-400 shrink-0">✓</span>
+                  }
+                  <span className={entry.error ? 'text-red-300' : 'text-gray-300'}>{entry.source}</span>
+                </span>
+                <span className="text-gray-600 shrink-0">
+                  {entry.count} {entry.count === 1 ? 'job' : 'jobs'}
+                </span>
+              </div>
+            ))}
+            {crawlState.current_source && (
+              <div className="flex items-center gap-2 text-indigo-400">
+                <span className="inline-block animate-spin shrink-0">⟳</span>
+                <span>{crawlState.current_source}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="relative">
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
           fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -435,12 +473,6 @@ export default function Dashboard() {
               className="px-3 py-1.5 text-xs bg-indigo-700 hover:bg-indigo-600 rounded-lg font-medium transition-colors"
             >
               Save all
-            </button>
-            <button
-              onClick={() => handleBulkAction('skipped')}
-              className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-colors"
-            >
-              Skip all
             </button>
             <button
               onClick={() => handleBulkAction('denied')}

@@ -221,12 +221,6 @@ export default function JobCard({ job, onStatusChange, onApply, selected, onSele
             Save
           </button>
           <button
-            onClick={() => onStatusChange(job.id, 'skipped')}
-            className="flex-1 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg text-xs font-semibold transition-colors"
-          >
-            Skip
-          </button>
-          <button
             onClick={() => onStatusChange(job.id, 'denied')}
             className="flex-1 py-1.5 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg text-xs font-semibold transition-colors"
             title="Deny: permanently removes this job and blocks it from reappearing"

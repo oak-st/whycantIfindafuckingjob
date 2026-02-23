@@ -133,68 +133,84 @@ def _strip_html(text: str) -> str:
 
 class CompanyCrawler:
     async def crawl(self, keywords: list[str], location: str,
-                    max_jobs: int = 200, headless: bool | None = None) -> list[dict]:
+                    max_jobs: int = 200, headless: bool | None = None,
+                    on_start=None, on_done=None) -> list[dict]:
         jobs: list[dict] = []
         loop = asyncio.get_event_loop()
 
         # Greenhouse
         for name, token in GREENHOUSE.items():
+            if on_start: on_start(name)
             try:
                 found = await loop.run_in_executor(
                     None, self._greenhouse, name, token, keywords
                 )
                 jobs.extend(found)
                 print(f"[Companies] {name}: {len(found)} jobs")
+                if on_done: on_done(name, len(found))
                 await _delay()
             except Exception as e:
                 print(f"[Companies] {name} (greenhouse) error: {e}")
+                if on_done: on_done(name, 0, error=True)
 
         # Lever
         for name, slug in LEVER.items():
+            if on_start: on_start(name)
             try:
                 found = await loop.run_in_executor(
                     None, self._lever, name, slug, keywords
                 )
                 jobs.extend(found)
                 print(f"[Companies] {name}: {len(found)} jobs")
+                if on_done: on_done(name, len(found))
                 await _delay()
             except Exception as e:
                 print(f"[Companies] {name} (lever) error: {e}")
+                if on_done: on_done(name, 0, error=True)
 
         # Netflix (custom API)
+        if on_start: on_start("Netflix")
         try:
             found = await loop.run_in_executor(None, self._netflix, keywords)
             jobs.extend(found)
             print(f"[Companies] Netflix: {len(found)} jobs")
+            if on_done: on_done("Netflix", len(found))
         except Exception as e:
             print(f"[Companies] Netflix error: {e}")
+            if on_done: on_done("Netflix", 0, error=True)
 
         # Workday companies
         for name, subdomain, tenant, site in WORKDAY:
+            if on_start: on_start(name)
             try:
                 found = await loop.run_in_executor(
                     None, self._workday, name, subdomain, tenant, site, keywords
                 )
                 jobs.extend(found)
                 print(f"[Companies] {name}: {len(found)} jobs")
+                if on_done: on_done(name, len(found))
                 await _delay()
             except Exception as e:
                 print(f"[Companies] {name} (workday) error: {e}")
+                if on_done: on_done(name, 0, error=True)
 
         # Microsoft (gcsservices JSON API — no browser needed)
+        if on_start: on_start("Microsoft")
         try:
             found = await loop.run_in_executor(None, self._microsoft_api, keywords)
             jobs.extend(found)
             print(f"[Companies] Microsoft: {len(found)} jobs")
+            if on_done: on_done("Microsoft", len(found))
         except Exception as e:
             print(f"[Companies] Microsoft error: {e}")
+            if on_done: on_done("Microsoft", 0, error=True)
 
         # Playwright-based scrapers (share one browser instance)
         try:
-            found = await self._playwright_scrape(keywords, headless=headless)
+            found = await self._playwright_scrape(keywords, headless=headless,
+                                                   on_start=on_start, on_done=on_done)
             for company, company_jobs in found.items():
                 jobs.extend(company_jobs)
-                print(f"[Companies] {company}: {len(company_jobs)} jobs")
         except Exception as e:
             print(f"[Companies] Playwright scrape error: {e}")
 
@@ -257,7 +273,8 @@ class CompanyCrawler:
     # ── Playwright (Amazon, Google, Microsoft, Meta) ───────────────────────────
 
     async def _playwright_scrape(self, keywords: list[str],
-                                  headless: bool | None = None) -> dict[str, list[dict]]:
+                                  headless: bool | None = None,
+                                  on_start=None, on_done=None) -> dict[str, list[dict]]:
         """Run all Playwright-based scrapers sharing a single browser."""
         _headless = HEADLESS if headless is None else headless
         results: dict[str, list[dict]] = {}
@@ -273,9 +290,21 @@ class CompanyCrawler:
                 locale="en-US",
             )
             try:
-                results["Amazon"] = await self._amazon(context, keywords)
-                results["Apple"]  = await self._apple(context, keywords)
-                results["Google"] = await self._google(context, keywords)
+                for name, method in [
+                    ("Amazon", self._amazon),
+                    ("Apple",  self._apple),
+                    ("Google", self._google),
+                ]:
+                    if on_start: on_start(name)
+                    try:
+                        found = await method(context, keywords)
+                        results[name] = found
+                        print(f"[Companies] {name}: {len(found)} jobs")
+                        if on_done: on_done(name, len(found))
+                    except Exception as e:
+                        print(f"[Companies] {name} (playwright) error: {e}")
+                        if on_done: on_done(name, 0, error=True)
+                        results[name] = []
             finally:
                 await browser.close()
 
