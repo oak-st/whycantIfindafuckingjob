@@ -190,6 +190,23 @@ def update_job_status(job_id: int, body: JobStatusUpdate, db: Session = Depends(
     return job
 
 
+@app.post("/api/jobs/dismiss")
+def dismiss_jobs(
+    source: Optional[str] = None,
+    status: Optional[str] = "new",
+    db: Session = Depends(get_db),
+):
+    """Mark all matching jobs as skipped (soft dismiss from dashboard)."""
+    q = db.query(Job)
+    if status and status != "all":
+        q = q.filter(Job.status == status)
+    if source and source != "all":
+        q = q.filter(Job.source == source)
+    count = q.update({"status": "skipped"}, synchronize_session=False)
+    db.commit()
+    return {"dismissed": count}
+
+
 # ── Crawl ─────────────────────────────────────────────────────────────────────
 
 @app.get("/api/crawl/status", response_model=CrawlStatus)

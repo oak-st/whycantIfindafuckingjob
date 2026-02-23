@@ -24,6 +24,7 @@ export default function Dashboard() {
   // ── New state ────────────────────────────────────────────────────────────────
   const [panelJob, setPanelJob] = useState(null)
   const [viewMode, setViewMode] = useState('grid')
+  const [confirmClear, setConfirmClear] = useState(false)
   const [seenIds, setSeenIds] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('seenJobIds') || '[]')) }
     catch { return new Set() }
@@ -223,6 +224,20 @@ export default function Dashboard() {
     }
   }
 
+  const dismissAllJobs = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (filter.source !== 'all') params.set('source', filter.source)
+      if (filter.status !== 'all') params.set('status', filter.status)
+      await fetch(`${API}/jobs/dismiss?${params}`, { method: 'POST' })
+      setConfirmClear(false)
+      fetchJobs()
+    } catch (e) {
+      setError(e.message)
+      setConfirmClear(false)
+    }
+  }
+
   const handleStatusChange = async (jobId, status) => {
     try {
       await fetch(`${API}/jobs/${jobId}`, {
@@ -276,7 +291,7 @@ export default function Dashboard() {
             </p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {isCrawling && (
             <button
               onClick={stopCrawl}
@@ -293,6 +308,31 @@ export default function Dashboard() {
           >
             {isCrawling ? 'Crawling...' : 'Crawl Now'}
           </button>
+
+          {/* Clear all — two-step confirm */}
+          {confirmClear ? (
+            <div className="flex gap-1.5 items-center bg-red-950 border border-red-800 rounded-xl px-3 py-1.5">
+              <span className="text-xs text-red-300 font-medium">Dismiss all?</span>
+              <button
+                onClick={dismissAllJobs}
+                className="text-xs px-2 py-0.5 bg-red-700 hover:bg-red-600 text-white rounded-lg font-semibold transition-colors"
+              >Yes</button>
+              <button
+                onClick={() => setConfirmClear(false)}
+                className="text-xs px-2 py-0.5 text-red-400 hover:text-red-200 transition-colors"
+              >No</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmClear(true)}
+              disabled={isCrawling}
+              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-400 hover:text-gray-200
+                         rounded-xl text-sm transition-colors"
+              title="Delete all crawled jobs"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
