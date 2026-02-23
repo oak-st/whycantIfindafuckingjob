@@ -2,6 +2,7 @@ import React from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import Applications from './pages/Applications'
+import Insights from './pages/Insights'
 import Settings from './pages/Settings'
 
 function NavItem({ to, label }) {
@@ -29,6 +30,7 @@ export default function App() {
         <nav className="flex gap-2">
           <NavItem to="/" label="Dashboard" />
           <NavItem to="/applications" label="Applications" />
+          <NavItem to="/insights" label="Insights" />
           <NavItem to="/settings" label="Settings" />
         </nav>
       </header>
@@ -36,6 +38,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/applications" element={<Applications />} />
+          <Route path="/insights" element={<Insights />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>

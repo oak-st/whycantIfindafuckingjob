@@ -156,6 +156,33 @@ def get_stats(db: Session = Depends(get_db)):
     return counts
 
 
+@app.get("/api/stats/sources")
+def get_source_stats(db: Session = Depends(get_db)):
+    from collections import defaultdict
+    rows = db.query(Job.source, Job.status, Job.relevance_score).all()
+    data = defaultdict(lambda: {"total": 0, "new": 0, "saved": 0, "applied": 0, "denied": 0, "scores": []})
+    for source, status, score in rows:
+        d = data[source]
+        d["total"] += 1
+        if status in ("new", "saved", "applied", "denied"):
+            d[status] += 1
+        if score is not None:
+            d["scores"].append(score)
+    result = []
+    for source, d in data.items():
+        scores = d.pop("scores")
+        result.append({
+            "source": source,
+            "total": d["total"],
+            "new": d["new"],
+            "saved": d["saved"],
+            "applied": d["applied"],
+            "denied": d["denied"],
+            "avg_score": round(sum(scores) / len(scores), 1) if scores else None,
+        })
+    return sorted(result, key=lambda r: r["avg_score"] or 0, reverse=True)
+
+
 @app.get("/api/jobs", response_model=List[JobOut])
 def list_jobs(
     status: Optional[str] = None,
