@@ -88,4 +88,5 @@ class CrawlStatus(BaseModel):
     jobs_found: int = 0
     next_crawl_at: Optional[str] = None
     current_source: Optional[str] = None
+    total_sources: int = 0
     log: list[CrawlLogEntry] = []

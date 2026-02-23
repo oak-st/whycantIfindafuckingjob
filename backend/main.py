@@ -39,7 +39,7 @@ app.add_middleware(
 )
 
 # Track crawl state
-crawl_state = {"running": False, "message": "Idle", "jobs_found": 0, "log": [], "current_source": None}
+crawl_state = {"running": False, "message": "Idle", "jobs_found": 0, "log": [], "current_source": None, "total_sources": 0}
 
 scheduler = AsyncIOScheduler()
 
@@ -204,6 +204,7 @@ def get_crawl_status():
         jobs_found=crawl_state["jobs_found"],
         next_crawl_at=next_crawl_at,
         current_source=crawl_state.get("current_source"),
+        total_sources=crawl_state.get("total_sources", 0),
         log=crawl_state.get("log", []),
     )
 
@@ -236,10 +237,13 @@ async def _async_crawl():
         total = 0
 
         # FAANG + AI company career pages
+        from crawlers.company import GREENHOUSE, LEVER, WORKDAY as _WORKDAY
+        crawl_state["total_sources"] = len(GREENHOUSE) + len(LEVER) + 1 + len(_WORKDAY) + 1 + 3
         crawl_state["message"] = "Crawling company career pages..."
 
         def _on_company_start(name: str):
             crawl_state["current_source"] = name
+            crawl_state["message"] = f"Crawling {name}..."
 
         def _on_company_done(name: str, count: int, error: bool = False):
             crawl_state["log"].append({"source": name, "count": count, "error": error})

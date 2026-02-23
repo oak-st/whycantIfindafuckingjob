@@ -242,27 +242,50 @@ export default function Dashboard() {
       {/* Live crawl log */}
       {(isCrawling || crawlState.log?.length > 0) && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-          <div className="px-4 py-2 border-b border-gray-800 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Crawl Log</span>
-            <span className="text-xs text-gray-600">
-              {crawlState.log?.length || 0} sources · {crawlState.jobs_found} new jobs
-            </span>
-          </div>
-          <div ref={logRef} className="max-h-52 overflow-y-auto px-4 py-3 space-y-1 font-mono text-xs">
-            {crawlState.log?.map((entry, i) => (
-              <div key={i} className="flex items-center justify-between gap-4">
-                <span className="flex items-center gap-2 min-w-0">
-                  {entry.error
-                    ? <span className="text-red-400 shrink-0">✕</span>
-                    : <span className="text-green-400 shrink-0">✓</span>
-                  }
-                  <span className={entry.error ? 'text-red-300' : 'text-gray-300'}>{entry.source}</span>
-                </span>
-                <span className="text-gray-600 shrink-0">
-                  {entry.count} {entry.count === 1 ? 'job' : 'jobs'}
-                </span>
+          {/* Header + progress bar */}
+          <div className="px-4 pt-3 pb-2 border-b border-gray-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Crawl Progress</span>
+              <span className="text-xs text-gray-500">
+                {crawlState.log?.length || 0} / {crawlState.total_sources || '—'} sources
+                {crawlState.total_sources > 0 && (
+                  <span className="ml-1 text-gray-400 font-medium">
+                    ({Math.round(((crawlState.log?.length || 0) / crawlState.total_sources) * 100)}%)
+                  </span>
+                )}
+              </span>
+            </div>
+            {crawlState.total_sources > 0 && (
+              <div className="w-full bg-gray-800 rounded-full h-1.5">
+                <div
+                  className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.round(((crawlState.log?.length || 0) / crawlState.total_sources) * 100)}%` }}
+                />
               </div>
-            ))}
+            )}
+          </div>
+
+          {/* Log entries */}
+          <div ref={logRef} className="max-h-52 overflow-y-auto px-4 py-3 space-y-1 font-mono text-xs">
+            {crawlState.log?.map((entry, i) => {
+              const pct = crawlState.total_sources > 0
+                ? Math.round(((i + 1) / crawlState.total_sources) * 100)
+                : null
+              return (
+                <div key={i} className="flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-2 min-w-0">
+                    {entry.error
+                      ? <span className="text-red-400 shrink-0">✕</span>
+                      : <span className="text-green-400 shrink-0">✓</span>
+                    }
+                    <span className={entry.error ? 'text-red-300' : 'text-gray-300'}>{entry.source}</span>
+                  </span>
+                  {pct !== null && (
+                    <span className="text-gray-600 shrink-0">{pct}%</span>
+                  )}
+                </div>
+              )
+            })}
             {crawlState.current_source && (
               <div className="flex items-center gap-2 text-indigo-400">
                 <span className="inline-block animate-spin shrink-0">⟳</span>
