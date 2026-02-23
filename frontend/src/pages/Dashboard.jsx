@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [panelJob, setPanelJob] = useState(null)
   const [viewMode, setViewMode] = useState('grid')
   const [confirmClear, setConfirmClear] = useState(false)
+  const [stats, setStats] = useState(null)
   const [seenIds, setSeenIds] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('seenJobIds') || '[]')) }
     catch { return new Set() }
@@ -57,6 +58,13 @@ export default function Dashboard() {
     return c ? `${label} (${c})` : label
   }
   // ────────────────────────────────────────────────────────────────────────────
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/stats`)
+      setStats(await res.json())
+    } catch { /* ignore */ }
+  }, [])
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -118,6 +126,7 @@ export default function Dashboard() {
   }
 
   useEffect(() => { fetchJobs() }, [fetchJobs])
+  useEffect(() => { fetchStats() }, [fetchStats])
 
   useEffect(() => {
     fetchCrawlStatus()
@@ -232,6 +241,7 @@ export default function Dashboard() {
       await fetch(`${API}/jobs/dismiss?${params}`, { method: 'POST' })
       setConfirmClear(false)
       fetchJobs()
+      fetchStats()
     } catch (e) {
       setError(e.message)
       setConfirmClear(false)
@@ -247,6 +257,7 @@ export default function Dashboard() {
       })
       setJobs(js => js.map(j => j.id === jobId ? { ...j, status } : j))
       setPanelJob(prev => prev?.id === jobId ? { ...prev, status } : prev)
+      fetchStats()
       if (hiddenJobs.some(j => j.id === jobId)) {
         setHiddenJobs(hj => hj.filter(j => j.id !== jobId))
         fetchJobs()
@@ -335,6 +346,23 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Stats bar */}
+      {stats && (
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: 'New',     value: stats.new,     color: 'text-blue-400' },
+            { label: 'Saved',   value: stats.saved,   color: 'text-slate-300' },
+            { label: 'Applied', value: stats.applied, color: 'text-green-400' },
+            { label: 'Total',   value: stats.total,   color: 'text-slate-500' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="flex items-center gap-1.5 bg-[#1c2026] border border-[#2a3241] rounded-lg px-3 py-1.5">
+              <span className={`text-sm font-bold ${color}`}>{value}</span>
+              <span className="text-xs text-slate-500">{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Live crawl log */}
       {(isCrawling || crawlState.log?.length > 0) && (

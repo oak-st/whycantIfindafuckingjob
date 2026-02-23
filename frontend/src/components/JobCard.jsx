@@ -218,9 +218,18 @@ export default function JobCard({
           </div>
         ) : null}
 
-        <a href={job.url} target="_blank" rel="noopener noreferrer"
-          onClick={sp(() => {})}
-          className="shrink-0 text-slate-500 hover:text-slate-300 text-sm" title="Open original posting">↗</a>
+        <div className="flex items-center gap-2 shrink-0">
+          {job.status !== 'applied' && (
+            <button
+              onClick={sp(() => onStatusChange(job.id, 'denied'))}
+              className="text-slate-600 hover:text-red-400 text-sm leading-none transition-colors"
+              title="Deny"
+            >✕</button>
+          )}
+          <a href={job.url} target="_blank" rel="noopener noreferrer"
+            onClick={sp(() => {})}
+            className="text-slate-500 hover:text-slate-300 text-sm" title="Open original posting">↗</a>
+        </div>
       </div>
     )
   }
@@ -266,14 +275,23 @@ export default function JobCard({
           <p className="text-sm text-slate-400">{job.company}</p>
         </div>
 
-        <a
-          href={job.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={sp(() => {})}
-          className="shrink-0 text-slate-500 hover:text-slate-300 text-sm leading-none"
-          title="Open original posting"
-        >↗</a>
+        <div className="flex items-center gap-2 shrink-0">
+          {job.status !== 'applied' && (
+            <button
+              onClick={sp(() => onStatusChange(job.id, 'denied'))}
+              className="text-slate-600 hover:text-red-400 text-sm leading-none transition-colors"
+              title="Deny"
+            >✕</button>
+          )}
+          <a
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={sp(() => {})}
+            className="text-slate-500 hover:text-slate-300 text-sm leading-none"
+            title="Open original posting"
+          >↗</a>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3 text-xs text-slate-400">

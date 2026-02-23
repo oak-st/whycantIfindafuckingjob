@@ -147,6 +147,15 @@ async def shutdown():
 
 # ── Jobs ─────────────────────────────────────────────────────────────────────
 
+@app.get("/api/stats")
+def get_stats(db: Session = Depends(get_db)):
+    counts = {}
+    for status in ("new", "saved", "applied", "denied", "skipped"):
+        counts[status] = db.query(Job).filter(Job.status == status).count()
+    counts["total"] = db.query(Job).count()
+    return counts
+
+
 @app.get("/api/jobs", response_model=List[JobOut])
 def list_jobs(
     status: Optional[str] = None,
