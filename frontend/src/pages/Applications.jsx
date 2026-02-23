@@ -20,22 +20,22 @@ export default function Applications() {
       .catch(() => setLoading(false))
   }, [])
 
-  if (loading) return <div className="text-center text-gray-500 py-20">Loading...</div>
+  if (loading) return <div className="text-center text-zinc-500 py-20">Loading...</div>
 
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-bold text-white">Applications</h1>
 
       {apps.length === 0 ? (
-        <div className="text-center text-gray-500 py-20">
+        <div className="text-center text-zinc-500 py-20">
           <p className="text-lg mb-2">No applications yet</p>
           <p className="text-sm">Apply to jobs from the Dashboard</p>
         </div>
       ) : (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800 text-left text-xs text-gray-500 uppercase">
+              <tr className="border-b border-zinc-800 text-left text-xs text-zinc-500 uppercase">
                 <th className="px-4 py-3 font-medium">Role</th>
                 <th className="px-4 py-3 font-medium">Company</th>
                 <th className="px-4 py-3 font-medium">Source</th>
@@ -49,27 +49,23 @@ export default function Applications() {
                 <React.Fragment key={app.id}>
                   <tr
                     onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
-                    className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors cursor-pointer select-none"
+                    className="border-b border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer select-none"
                   >
                     <td className="px-4 py-3 text-white font-medium">{app.job?.title || '—'}</td>
-                    <td className="px-4 py-3 text-gray-300">{app.job?.company || '—'}</td>
+                    <td className="px-4 py-3 text-zinc-300">{app.job?.company || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        app.job?.source === 'glassdoor'
-                          ? 'bg-green-900 text-green-300'
-                          : 'bg-gray-800 text-gray-300'
-                      }`}>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-zinc-800 text-zinc-300">
                         {app.job?.source || '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400">{formatDate(app.applied_at)}</td>
+                    <td className="px-4 py-3 text-zinc-400">{formatDate(app.applied_at)}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         app.status === 'submitted'
-                          ? 'bg-green-900 text-green-300'
+                          ? 'bg-green-950 text-green-400'
                           : app.status === 'error'
-                          ? 'bg-red-900 text-red-300'
-                          : 'bg-gray-800 text-gray-400'
+                          ? 'bg-red-950 text-red-400'
+                          : 'bg-zinc-800 text-zinc-400'
                       }`}>
                         {app.status}
                       </span>
@@ -80,7 +76,7 @@ export default function Applications() {
                           href={app.job.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-400 hover:text-indigo-300 underline text-xs"
+                          className="text-zinc-300 hover:text-white underline text-xs transition-colors"
                         >
                           View
                         </a>
@@ -88,10 +84,10 @@ export default function Applications() {
                     </td>
                   </tr>
                   {expandedId === app.id && (
-                    <tr className="border-b border-gray-800 bg-gray-900/60">
+                    <tr className="border-b border-zinc-800 bg-zinc-900/60">
                       <td colSpan={6} className="px-4 py-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cover Letter</p>
-                        <pre className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed font-sans max-h-80 overflow-y-auto">
+                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">Cover Letter</p>
+                        <pre className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed font-sans max-h-80 overflow-y-auto">
                           {app.cover_letter || 'No cover letter saved.'}
                         </pre>
                       </td>

@@ -1,37 +1,37 @@
 import React from 'react'
 
 const SOURCE_COLORS = {
-  glassdoor:   'bg-green-900 text-green-300',
-  indeed:      'bg-purple-900 text-purple-300',
-  google:      'bg-red-900 text-red-300',
-  amazon:      'bg-orange-900 text-orange-300',
-  microsoft:   'bg-sky-900 text-sky-300',
-  meta:        'bg-blue-950 text-blue-200',
+  glassdoor:   'bg-green-950 text-green-400',
+  indeed:      'bg-purple-950 text-purple-400',
+  google:      'bg-red-950 text-red-400',
+  amazon:      'bg-orange-950 text-orange-400',
+  microsoft:   'bg-sky-950 text-sky-400',
+  meta:        'bg-blue-950 text-blue-300',
   apple:       'bg-zinc-800 text-zinc-300',
-  anthropic:   'bg-rose-900 text-rose-300',
-  scale_ai:    'bg-violet-900 text-violet-300',
-  xai:         'bg-slate-800 text-slate-300',
-  databricks:  'bg-red-950 text-red-300',
-  cloudflare:  'bg-orange-950 text-orange-300',
-  datadog:     'bg-purple-950 text-purple-300',
-  okta:        'bg-sky-950 text-sky-300',
-  zscaler:     'bg-blue-800 text-blue-200',
-  pure_storage:'bg-teal-900 text-teal-300',
-  rubrik:      'bg-cyan-900 text-cyan-300',
-  mongodb:     'bg-green-950 text-green-300',
-  elastic:     'bg-yellow-900 text-yellow-300',
-  twilio:      'bg-red-800 text-red-200',
-  mistral_ai:  'bg-indigo-900 text-indigo-300',
-  netflix:     'bg-red-700 text-red-100',
-  nvidia:      'bg-green-700 text-green-100',
-  crowdstrike: 'bg-orange-800 text-orange-200',
-  riot_games:  'bg-rose-800 text-rose-200',
-  epic_games:  'bg-blue-700 text-blue-100',
-  bungie:      'bg-gray-700 text-gray-200',
-  discord:     'bg-violet-800 text-violet-200',
-  roblox:      'bg-red-900 text-red-200',
-  fanduel:     'bg-blue-800 text-blue-200',
-  snowflake:   'bg-cyan-800 text-cyan-200',
+  anthropic:   'bg-rose-950 text-rose-400',
+  scale_ai:    'bg-violet-950 text-violet-400',
+  xai:         'bg-zinc-800 text-zinc-300',
+  databricks:  'bg-red-950 text-red-400',
+  cloudflare:  'bg-orange-950 text-orange-400',
+  datadog:     'bg-purple-950 text-purple-400',
+  okta:        'bg-sky-950 text-sky-400',
+  zscaler:     'bg-blue-950 text-blue-300',
+  pure_storage:'bg-teal-950 text-teal-400',
+  rubrik:      'bg-cyan-950 text-cyan-400',
+  mongodb:     'bg-green-950 text-green-400',
+  elastic:     'bg-yellow-950 text-yellow-400',
+  twilio:      'bg-red-950 text-red-400',
+  mistral_ai:  'bg-indigo-950 text-indigo-400',
+  netflix:     'bg-red-950 text-red-400',
+  nvidia:      'bg-green-950 text-green-400',
+  crowdstrike: 'bg-orange-950 text-orange-400',
+  riot_games:  'bg-rose-950 text-rose-400',
+  epic_games:  'bg-blue-950 text-blue-300',
+  bungie:      'bg-zinc-800 text-zinc-300',
+  discord:     'bg-violet-950 text-violet-400',
+  roblox:      'bg-red-950 text-red-400',
+  fanduel:     'bg-blue-950 text-blue-300',
+  snowflake:   'bg-cyan-950 text-cyan-400',
 }
 
 const sourceLabel = (src) =>
@@ -77,13 +77,13 @@ export default function JobCard({
   selected, onSelect, hidden = false,
 }) {
   const cleanDesc = stripHtml(job.description)
-  const badge = SOURCE_COLORS[job.source] || 'bg-gray-800 text-gray-300'
+  const badge = SOURCE_COLORS[job.source] || 'bg-zinc-800 text-zinc-300'
   const selectable = !!onSelect && job.status !== 'applied'
   const statusColors = {
-    new:     'border-gray-700',
-    saved:   'border-indigo-700',
-    skipped: 'border-gray-800 opacity-50',
-    applied: 'border-green-700',
+    new:     'border-zinc-800',
+    saved:   'border-zinc-500',
+    skipped: 'border-zinc-900 opacity-50',
+    applied: 'border-green-800',
     denied:  'border-red-900 opacity-40',
   }
 
@@ -93,32 +93,32 @@ export default function JobCard({
   if (hidden) {
     if (compact) {
       return (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 flex items-center gap-3 opacity-50 hover:opacity-80 transition-opacity">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 flex items-center gap-3 opacity-50 hover:opacity-80 transition-opacity">
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badge}`}>
             {sourceLabel(job.source)}
           </span>
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
-            job.status === 'denied' ? 'bg-red-950 text-red-400' : 'bg-gray-800 text-gray-500'
+            job.status === 'denied' ? 'bg-red-950 text-red-400' : 'bg-zinc-800 text-zinc-500'
           }`}>{job.status}</span>
           <span className="flex-1 min-w-0 text-sm font-semibold text-white truncate">{job.title}</span>
-          <span className="text-xs text-gray-400 shrink-0 hidden sm:block">{job.company}</span>
+          <span className="text-xs text-zinc-400 shrink-0 hidden sm:block">{job.company}</span>
           {onView && (
             <button onClick={() => onView(job)}
-              className="shrink-0 text-xs text-gray-400 hover:text-gray-200 transition-colors">
+              className="shrink-0 text-xs text-zinc-400 hover:text-white transition-colors">
               View
             </button>
           )}
           <a href={job.url} target="_blank" rel="noopener noreferrer"
-            className="shrink-0 text-gray-500 hover:text-gray-300 text-sm">↗</a>
+            className="shrink-0 text-zinc-500 hover:text-zinc-300 text-sm">↗</a>
           <button
             onClick={() => onStatusChange(job.id, 'new')}
-            className="shrink-0 px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
+            className="shrink-0 px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-semibold transition-colors"
           >Undo</button>
         </div>
       )
     }
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3 opacity-50 hover:opacity-80 transition-opacity">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3 opacity-50 hover:opacity-80 transition-opacity">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -126,26 +126,26 @@ export default function JobCard({
                 {sourceLabel(job.source)}
               </span>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                job.status === 'denied' ? 'bg-red-950 text-red-400' : 'bg-gray-800 text-gray-500'
+                job.status === 'denied' ? 'bg-red-950 text-red-400' : 'bg-zinc-800 text-zinc-500'
               }`}>{job.status}</span>
             </div>
             <h3 className="text-sm font-semibold text-white mt-1 leading-snug">{job.title}</h3>
-            <p className="text-xs text-gray-400">{job.company}</p>
+            <p className="text-xs text-zinc-400">{job.company}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {onView && (
               <button onClick={() => onView(job)}
-                className="text-xs text-indigo-400 hover:text-indigo-300 underline">
+                className="text-xs text-zinc-300 hover:text-white underline">
                 View
               </button>
             )}
             <a href={job.url} target="_blank" rel="noopener noreferrer"
-              className="text-gray-500 hover:text-gray-300 text-sm">↗</a>
+              className="text-zinc-500 hover:text-zinc-300 text-sm">↗</a>
           </div>
         </div>
         <button
           onClick={() => onStatusChange(job.id, 'new')}
-          className="w-full py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
+          className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-semibold transition-colors"
         >Undo</button>
       </div>
     )
@@ -157,10 +157,10 @@ export default function JobCard({
       <div
         onClick={() => selectable && onSelect(job.id)}
         className={`
-          bg-gray-900 border rounded-xl px-4 py-3 flex items-center gap-3 transition-all
-          ${statusColors[job.status] || 'border-gray-700'}
-          ${selected ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-gray-950' : ''}
-          ${selectable ? 'cursor-pointer hover:border-gray-600' : ''}
+          bg-zinc-900 border rounded-xl px-4 py-3 flex items-center gap-3 transition-all
+          ${statusColors[job.status] || 'border-zinc-800'}
+          ${selected ? 'ring-1 ring-white/50 ring-offset-1 ring-offset-black' : ''}
+          ${selectable ? 'cursor-pointer hover:border-zinc-700' : ''}
         `}
       >
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badge}`}>
@@ -171,16 +171,16 @@ export default function JobCard({
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-sm font-semibold text-white truncate">{job.title}</span>
             {isNew && job.status === 'new' && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-600 text-white font-bold shrink-0">NEW</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-black font-bold shrink-0">NEW</span>
             )}
             {job.status === 'saved' && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 font-medium shrink-0">Saved</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-medium shrink-0">Saved</span>
             )}
             {job.status === 'applied' && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300 font-medium shrink-0">Applied</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-950 text-green-400 font-medium shrink-0">Applied</span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-zinc-400">
             <span className="shrink-0">{job.company}</span>
             {job.location && <span className="shrink-0 truncate">· {job.location}</span>}
             {job.salary && <span className="text-green-400 shrink-0">{job.salary}</span>}
@@ -194,13 +194,13 @@ export default function JobCard({
           {job.relevance_score != null && (
             <span className={`text-xs font-medium w-8 text-right ${
               job.relevance_score >= 8 ? 'text-amber-400' :
-              job.relevance_score >= 6 ? 'text-lime-400' : 'text-gray-600'
+              job.relevance_score >= 6 ? 'text-lime-400' : 'text-zinc-600'
             }`}>{job.relevance_score}/10</span>
           )}
         </div>
 
         {job.crawled_at && (
-          <span className="hidden xl:block text-xs text-gray-500 shrink-0 w-20 text-right">
+          <span className="hidden xl:block text-xs text-zinc-500 shrink-0 w-20 text-right">
             {crawledAgo(job.crawled_at)}
           </span>
         )}
@@ -208,19 +208,19 @@ export default function JobCard({
         {job.status !== 'applied' ? (
           <div className="flex gap-1.5 shrink-0">
             <button onClick={sp(() => onView && onView(job))}
-              className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors">View</button>
+              className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-semibold transition-colors">View</button>
             <button onClick={sp(() => onStatusChange(job.id, 'saved'))}
-              className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors">Save</button>
+              className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-semibold transition-colors">Save</button>
             <button onClick={sp(() => onStatusChange(job.id, 'denied'))}
               className="px-2.5 py-1 bg-red-950 hover:bg-red-900 text-red-400 rounded-lg text-xs font-semibold transition-colors">Deny</button>
             <button onClick={sp(() => onApply(job))}
-              className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold transition-colors">Apply</button>
+              className="px-2.5 py-1 bg-white hover:bg-zinc-200 text-black rounded-lg text-xs font-semibold transition-colors">Apply</button>
           </div>
         ) : null}
 
         <a href={job.url} target="_blank" rel="noopener noreferrer"
           onClick={sp(() => {})}
-          className="shrink-0 text-gray-500 hover:text-gray-300 text-sm" title="Open original posting">↗</a>
+          className="shrink-0 text-zinc-500 hover:text-zinc-300 text-sm" title="Open original posting">↗</a>
       </div>
     )
   }
@@ -230,10 +230,10 @@ export default function JobCard({
     <div
       onClick={() => selectable && onSelect(job.id)}
       className={`
-        bg-gray-900 border rounded-xl p-4 space-y-3 transition-all
-        ${statusColors[job.status] || 'border-gray-700'}
-        ${selected ? 'ring-2 ring-indigo-500 ring-offset-1 ring-offset-gray-950' : ''}
-        ${selectable ? 'cursor-pointer hover:border-gray-600' : ''}
+        bg-zinc-900 border rounded-xl p-4 space-y-3 transition-all
+        ${statusColors[job.status] || 'border-zinc-800'}
+        ${selected ? 'ring-1 ring-white/50 ring-offset-1 ring-offset-black' : ''}
+        ${selectable ? 'cursor-pointer hover:border-zinc-700' : ''}
       `}
     >
       <div className="flex items-start justify-between gap-2">
@@ -243,7 +243,7 @@ export default function JobCard({
               {sourceLabel(job.source)}
             </span>
             {isNew && job.status === 'new' && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-600 text-white font-bold">NEW</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-black font-bold">NEW</span>
             )}
             {job.relevance_score >= 8 && (
               <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">
@@ -256,14 +256,14 @@ export default function JobCard({
               </span>
             )}
             {job.status === 'applied' && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900 text-green-300 font-medium">Applied</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-950 text-green-400 font-medium">Applied</span>
             )}
             {job.status === 'saved' && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 font-medium">Saved</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-medium">Saved</span>
             )}
           </div>
           <h3 className="text-base font-semibold text-white mt-1 leading-snug">{job.title}</h3>
-          <p className="text-sm text-gray-400">{job.company}</p>
+          <p className="text-sm text-zinc-400">{job.company}</p>
         </div>
 
         <a
@@ -271,30 +271,30 @@ export default function JobCard({
           target="_blank"
           rel="noopener noreferrer"
           onClick={sp(() => {})}
-          className="shrink-0 text-gray-500 hover:text-gray-300 text-sm leading-none"
+          className="shrink-0 text-zinc-500 hover:text-zinc-300 text-sm leading-none"
           title="Open original posting"
         >↗</a>
       </div>
 
-      <div className="flex flex-wrap gap-3 text-xs text-gray-400">
+      <div className="flex flex-wrap gap-3 text-xs text-zinc-400">
         {job.location && <span>{job.location}</span>}
         {job.salary && <span className="text-green-400">{job.salary}</span>}
         {job.posted_date && <span>{job.posted_date}</span>}
         {job.relevance_score != null && (
           <span className={`font-medium ${
             job.relevance_score >= 8 ? 'text-amber-400' :
-            job.relevance_score >= 6 ? 'text-lime-400' : 'text-gray-600'
+            job.relevance_score >= 6 ? 'text-lime-400' : 'text-zinc-600'
           }`}>
             {job.relevance_score}/10
           </span>
         )}
         {job.crawled_at && (
-          <span className="text-gray-500 ml-auto">{crawledAgo(job.crawled_at)}</span>
+          <span className="text-zinc-500 ml-auto">{crawledAgo(job.crawled_at)}</span>
         )}
       </div>
 
       {cleanDesc && (
-        <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">
+        <p className="text-xs text-zinc-500 leading-relaxed line-clamp-3">
           {cleanDesc}
         </p>
       )}
@@ -303,15 +303,15 @@ export default function JobCard({
         <div className="flex gap-2 pt-1">
           <button
             onClick={sp(() => onApply(job))}
-            className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold transition-colors"
+            className="flex-1 py-1.5 bg-white hover:bg-zinc-200 text-black rounded-lg text-xs font-semibold transition-colors"
           >Apply</button>
           <button
             onClick={sp(() => onView && onView(job))}
-            className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
+            className="flex-1 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-semibold transition-colors"
           >View</button>
           <button
             onClick={sp(() => onStatusChange(job.id, 'saved'))}
-            className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs font-semibold transition-colors"
+            className="flex-1 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-semibold transition-colors"
           >Save</button>
           <button
             onClick={sp(() => onStatusChange(job.id, 'denied'))}
