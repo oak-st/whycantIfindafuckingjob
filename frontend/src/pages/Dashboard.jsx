@@ -178,6 +178,14 @@ export default function Dashboard() {
     }
   }
 
+  const stopCrawl = async () => {
+    try {
+      await fetch(`${API}/crawl/stop`, { method: 'POST' })
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
   const handleStatusChange = async (jobId, status) => {
     try {
       await fetch(`${API}/jobs/${jobId}`, {
@@ -229,14 +237,24 @@ export default function Dashboard() {
             </p>
           )}
         </div>
-        <button
-          onClick={startCrawl}
-          disabled={isCrawling}
-          className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50
-                     rounded-xl text-sm font-semibold transition-colors"
-        >
-          {isCrawling ? 'Crawling...' : 'Crawl Now'}
-        </button>
+        <div className="flex gap-2">
+          {isCrawling && (
+            <button
+              onClick={stopCrawl}
+              className="px-5 py-2 bg-red-900 hover:bg-red-800 text-red-300 rounded-xl text-sm font-semibold transition-colors"
+            >
+              Stop
+            </button>
+          )}
+          <button
+            onClick={startCrawl}
+            disabled={isCrawling}
+            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50
+                       rounded-xl text-sm font-semibold transition-colors"
+          >
+            {isCrawling ? 'Crawling...' : 'Crawl Now'}
+          </button>
+        </div>
       </div>
 
       {/* Live crawl log */}
@@ -244,13 +262,21 @@ export default function Dashboard() {
         <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
           {/* Header + progress bar */}
           {!isCrawling && crawlState.log?.length > 0 ? (
-            <div className="px-4 py-3 border-b border-green-900 bg-green-950/40 flex items-center justify-between">
+            <div className={`px-4 py-3 border-b flex items-center justify-between ${
+              crawlState.message?.startsWith('Stopped')
+                ? 'border-yellow-900 bg-yellow-950/40'
+                : 'border-green-900 bg-green-950/40'
+            }`}>
               <div className="flex items-center gap-2">
-                <span className="text-green-400 text-base">✓</span>
-                <span className="text-sm font-semibold text-green-300">Crawl complete</span>
+                <span className={`text-base ${crawlState.message?.startsWith('Stopped') ? 'text-yellow-400' : 'text-green-400'}`}>
+                  {crawlState.message?.startsWith('Stopped') ? '◼' : '✓'}
+                </span>
+                <span className={`text-sm font-semibold ${crawlState.message?.startsWith('Stopped') ? 'text-yellow-300' : 'text-green-300'}`}>
+                  {crawlState.message?.startsWith('Stopped') ? 'Crawl stopped' : 'Crawl complete'}
+                </span>
               </div>
               <div className="text-right">
-                <span className="text-sm font-bold text-white">{crawlState.jobs_found} new {crawlState.jobs_found === 1 ? 'job' : 'jobs'} found</span>
+                <span className="text-sm font-bold text-white">{crawlState.jobs_found} new {crawlState.jobs_found === 1 ? 'job' : 'jobs'} saved</span>
                 <span className="text-xs text-gray-500 ml-2">across {crawlState.log.length} sources</span>
               </div>
             </div>

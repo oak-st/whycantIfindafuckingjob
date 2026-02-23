@@ -134,12 +134,16 @@ def _strip_html(text: str) -> str:
 class CompanyCrawler:
     async def crawl(self, keywords: list[str], location: str,
                     max_jobs: int = 200, headless: bool | None = None,
-                    on_start=None, on_done=None) -> list[dict]:
+                    on_start=None, on_done=None, should_stop=None) -> list[dict]:
         jobs: list[dict] = []
         loop = asyncio.get_event_loop()
 
+        def _cancelled():
+            return should_stop and should_stop()
+
         # Greenhouse
         for name, token in GREENHOUSE.items():
+            if _cancelled(): break
             if on_start: on_start(name)
             try:
                 found = await loop.run_in_executor(
@@ -155,6 +159,7 @@ class CompanyCrawler:
 
         # Lever
         for name, slug in LEVER.items():
+            if _cancelled(): break
             if on_start: on_start(name)
             try:
                 found = await loop.run_in_executor(
@@ -169,6 +174,7 @@ class CompanyCrawler:
                 if on_done: on_done(name, 0, error=True)
 
         # Netflix (custom API)
+        if _cancelled(): return jobs[:max_jobs]
         if on_start: on_start("Netflix")
         try:
             found = await loop.run_in_executor(None, self._netflix, keywords)
@@ -181,6 +187,7 @@ class CompanyCrawler:
 
         # Workday companies
         for name, subdomain, tenant, site in WORKDAY:
+            if _cancelled(): break
             if on_start: on_start(name)
             try:
                 found = await loop.run_in_executor(
@@ -195,6 +202,7 @@ class CompanyCrawler:
                 if on_done: on_done(name, 0, error=True)
 
         # Microsoft (gcsservices JSON API — no browser needed)
+        if _cancelled(): return jobs[:max_jobs]
         if on_start: on_start("Microsoft")
         try:
             found = await loop.run_in_executor(None, self._microsoft_api, keywords)
@@ -206,6 +214,7 @@ class CompanyCrawler:
             if on_done: on_done("Microsoft", 0, error=True)
 
         # Playwright-based scrapers (share one browser instance)
+        if _cancelled(): return jobs[:max_jobs]
         try:
             found = await self._playwright_scrape(keywords, headless=headless,
                                                    on_start=on_start, on_done=on_done)

@@ -39,7 +39,7 @@ app.add_middleware(
 )
 
 # Track crawl state
-crawl_state = {"running": False, "message": "Idle", "jobs_found": 0, "log": [], "current_source": None, "total_sources": 0}
+crawl_state = {"running": False, "message": "Idle", "jobs_found": 0, "log": [], "current_source": None, "total_sources": 0, "cancel_requested": False}
 
 scheduler = AsyncIOScheduler()
 
@@ -217,11 +217,20 @@ async def start_crawl(background_tasks: BackgroundTasks):
     return CrawlStatus(status="started", message="Crawl started", jobs_found=0)
 
 
+@app.post("/api/crawl/stop")
+def stop_crawl():
+    if crawl_state["running"]:
+        crawl_state["cancel_requested"] = True
+        return {"message": "Stop requested"}
+    return {"message": "No crawl running"}
+
+
 async def _async_crawl():
     crawl_state["running"] = True
     crawl_state["jobs_found"] = 0
     crawl_state["log"] = []
     crawl_state["current_source"] = None
+    crawl_state["cancel_requested"] = False
 
     db = next(get_db())
     try:
@@ -256,6 +265,7 @@ async def _async_crawl():
             jobs = await crawler.crawl(
                 keywords, location, max_jobs=max_jobs, headless=headless,
                 on_start=_on_company_start, on_done=_on_company_done,
+                should_stop=lambda: crawl_state.get("cancel_requested", False),
             )
             jobs = _filter_by_keywords(jobs, keywords)
             jobs = _filter_by_excluded_keywords(jobs, exclude_keywords)
@@ -281,9 +291,13 @@ async def _async_crawl():
             resume_text = resume_path.read_text(errors="ignore") if resume_path.exists() else ""
             await _score_new_jobs(db, api_key, keywords, resume_text)
 
-        crawl_state["message"] = f"Done — {total} new jobs found"
+        if crawl_state.get("cancel_requested"):
+            crawl_state["message"] = f"Stopped — {total} new jobs saved"
+        else:
+            crawl_state["message"] = f"Done — {total} new jobs found"
     finally:
         crawl_state["running"] = False
+        crawl_state["cancel_requested"] = False
         db.close()
 
 
