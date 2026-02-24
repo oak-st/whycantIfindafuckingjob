@@ -68,6 +68,9 @@ class SettingsIn(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
     work_authorized: Optional[bool] = None
+    # Glassdoor credentials
+    glassdoor_email: Optional[str] = None
+    glassdoor_password: Optional[str] = None
 
 
 class SettingsOut(BaseModel):
@@ -92,6 +95,8 @@ class SettingsOut(BaseModel):
     city: str = ""
     state: str = ""
     work_authorized: bool = True
+    # Glassdoor
+    has_glassdoor_credentials: bool = False
 
 
 class CrawlLogEntry(BaseModel):

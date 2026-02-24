@@ -103,7 +103,14 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
   const handleMarkApplied = async () => {
     setSubmitting(true)
     try {
-      await fetch(`${API}/apply/${job.id}/automate/close`, { method: 'POST' })
+      await fetch(`${API}/apply/${job.id}/automate/close`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cover_letter: draft?.cover_letter || '',
+          custom_answers: draft?.custom_answers || {},
+        }),
+      })
       if (pollRef.current) clearInterval(pollRef.current)
       onSubmitted(job.id)
     } catch (e) {

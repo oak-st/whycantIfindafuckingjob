@@ -31,6 +31,8 @@ function Section({ title, children }) {
 export default function Settings() {
   const [form, setForm] = useState({
     anthropic_api_key: '',
+    glassdoor_email: '',
+    glassdoor_password: '',
     search_keywords: 'IT Engineer, Senior IT Engineer, IT Systems Engineer',
     exclude_keywords: '',
     search_location: 'United States',
@@ -83,6 +85,9 @@ export default function Settings() {
           work_authorized: data.work_authorized ?? true,
         }))
         setResumeFilename(data.resume_filename || '')
+        if (data.has_glassdoor_credentials) {
+          setForm(f => ({ ...f, glassdoor_email: f.glassdoor_email || '(saved)' }))
+        }
       })
       .catch(() => {})
 
@@ -96,6 +101,8 @@ export default function Settings() {
     try {
       const body = {}
       if (form.anthropic_api_key) body.anthropic_api_key = form.anthropic_api_key
+      if (form.glassdoor_email && form.glassdoor_email !== '(saved)') body.glassdoor_email = form.glassdoor_email
+      if (form.glassdoor_password) body.glassdoor_password = form.glassdoor_password
       body.search_keywords = form.search_keywords
       body.exclude_keywords = form.exclude_keywords
       body.search_location = form.search_location
@@ -158,9 +165,19 @@ export default function Settings() {
           placeholder="sk-ant-..." hint="Used for generating cover letters and custom answers" />
       </Section>
 
+      <Section title="Glassdoor">
+        <p className="text-xs text-slate-500 -mt-1">Optional — enables crawling Glassdoor job listings. Credentials are encrypted and stored locally.</p>
+        <Field label="Glassdoor Email" type="email" value={form.glassdoor_email === '(saved)' ? '' : form.glassdoor_email}
+          onChange={set('glassdoor_email')} placeholder="your@email.com"
+          hint={form.glassdoor_email === '(saved)' ? '✓ Credentials saved — enter new values to update' : ''} />
+        <Field label="Glassdoor Password" type="password" value={form.glassdoor_password}
+          onChange={set('glassdoor_password')} placeholder="••••••••" />
+      </Section>
+
       <Section title="Job Search Preferences">
         <Field label="Keywords (comma-separated)" value={form.search_keywords} onChange={set('search_keywords')}
-          placeholder="IT Engineer, Senior IT Engineer" />
+          placeholder="IT Engineer, Senior IT Engineer"
+          hint='Each phrase is matched against the job title. Short phrases (1–2 words) require all words to appear. Longer phrases require a majority. Example: "IT Engineer" matches "Senior IT Engineer" and "IT Systems Engineer".' />
         <Field label="Exclude keywords (comma-separated)" value={form.exclude_keywords} onChange={set('exclude_keywords')}
           placeholder="intern, manager, director, staff"
           hint="Jobs whose title contains any of these words will be skipped during crawl" />

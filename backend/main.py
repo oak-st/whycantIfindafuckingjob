@@ -309,6 +309,8 @@ async def _async_crawl():
 
         def _on_company_done(name: str, count: int, error: bool = False):
             crawl_state["log"].append({"source": name, "count": count, "error": error})
+            if len(crawl_state["log"]) > 200:
+                crawl_state["log"] = crawl_state["log"][-200:]
             crawl_state["current_source"] = None
 
         try:
@@ -336,6 +338,31 @@ async def _async_crawl():
         except Exception as e:
             import traceback; traceback.print_exc()
             print(f"[Crawl] Company pages error: {e}")
+
+        # Glassdoor
+        gd_email = settings.get("glassdoor_email", "")
+        gd_password = decrypt(settings.get("glassdoor_password_enc", ""))
+        if gd_email and gd_password:
+            crawl_state["current_source"] = "Glassdoor"
+            crawl_state["message"] = "Crawling Glassdoor..."
+            try:
+                from crawlers.glassdoor import GlassdoorCrawler
+                gd_crawler = GlassdoorCrawler(email=gd_email, password=gd_password)
+                gd_jobs = await gd_crawler.crawl(
+                    keywords, location,
+                    max_jobs=min(max_jobs, 50),
+                    headless=headless,
+                )
+                n = _save_jobs(db, gd_jobs, "glassdoor", salary_min, salary_max)
+                total += n
+                crawl_state["jobs_found"] = total
+                crawl_state["log"].append({"source": "Glassdoor", "count": n, "error": False})
+                print(f"[Crawl] Glassdoor: saved {n} jobs")
+            except Exception as e:
+                print(f"[Crawl] Glassdoor error: {e}")
+                crawl_state["log"].append({"source": "Glassdoor", "count": 0, "error": True})
+            finally:
+                crawl_state["current_source"] = None
 
         # AI relevance scoring for newly saved jobs
         api_key = decrypt(settings.get("anthropic_api_key_enc", ""))
@@ -372,18 +399,24 @@ async def _score_new_jobs(db: Session, api_key: str, keywords: list[str], resume
 
     async def _score_one(job):
         async with sem:
-            try:
-                score = await score_job_relevance(
-                    api_key=api_key,
-                    job_title=job.title,
-                    job_description=job.description,
-                    keywords=keywords,
-                    resume_text=resume_text,
-                )
-                job.relevance_score = score
-                print(f"[Score] {job.title}: {score}/10")
-            except Exception as e:
-                print(f"[Score] Failed for '{job.title}': {e}")
+            for attempt in range(3):
+                try:
+                    score = await score_job_relevance(
+                        api_key=api_key,
+                        job_title=job.title,
+                        job_description=job.description,
+                        keywords=keywords,
+                        resume_text=resume_text,
+                    )
+                    job.relevance_score = score
+                    print(f"[Score] {job.title}: {score}/10")
+                    return
+                except Exception as e:
+                    if attempt < 2:
+                        await asyncio.sleep(2 ** attempt)
+                    else:
+                        job.relevance_score = 5  # neutral fallback so job still appears
+                        print(f"[Score] Failed for '{job.title}' after 3 attempts: {e}")
 
     await asyncio.gather(*[_score_one(j) for j in unscored])
 
@@ -535,14 +568,18 @@ def automate_status(job_id: int):
 
 
 @app.post("/api/apply/{job_id}/automate/close")
-async def automate_close(job_id: int, db: Session = Depends(get_db)):
+async def automate_close(job_id: int, body: ApplySubmit, db: Session = Depends(get_db)):
     from apply.filler import release_fill
     release_fill(job_id)
-    # Mark job as applied
     job = db.query(Job).filter(Job.id == job_id).first()
     if job:
         job.status = "applied"
-        app_record = Application(job_id=job_id, cover_letter="", custom_answers={}, status="submitted")
+        app_record = Application(
+            job_id=job_id,
+            cover_letter=body.cover_letter,
+            custom_answers=body.custom_answers,
+            status="submitted",
+        )
         db.add(app_record)
         db.commit()
     return {"status": "ok"}
@@ -601,6 +638,7 @@ def get_settings(db: Session = Depends(get_db)):
         city=s.get("city", ""),
         state=s.get("state", ""),
         work_authorized=s.get("work_authorized", "true") == "true",
+        has_glassdoor_credentials=bool(s.get("glassdoor_email") and s.get("glassdoor_password_enc")),
     )
 
 
@@ -634,6 +672,10 @@ def save_settings(body: SettingsIn, db: Session = Depends(get_db)):
             _set(db, field, val)
     if body.work_authorized is not None:
         _set(db, "work_authorized", "true" if body.work_authorized else "false")
+    if body.glassdoor_email is not None:
+        _set(db, "glassdoor_email", body.glassdoor_email)
+    if body.glassdoor_password is not None:
+        _set(db, "glassdoor_password_enc", encrypt(body.glassdoor_password))
     db.commit()
     s = _load_settings(db)
     _reschedule(

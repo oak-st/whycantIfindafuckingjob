@@ -659,13 +659,13 @@ export default function Dashboard() {
               onClick={() => handleBulkAction('saved')}
               className="px-3 py-1.5 text-xs bg-[#2e3845] hover:bg-white rounded-lg font-medium transition-colors"
             >
-              Save all
+              Save All
             </button>
             <button
               onClick={() => handleBulkAction('denied')}
               className="px-3 py-1.5 text-xs bg-red-950 hover:bg-red-900 text-white rounded-lg font-medium transition-colors"
             >
-              Deny all
+              Deny All
             </button>
             <button
               onClick={() => setSelectedIds(new Set())}
