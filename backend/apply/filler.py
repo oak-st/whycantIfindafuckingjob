@@ -87,7 +87,9 @@ async def start_fill(
             elif ats == "ashby":
                 await _fill_ashby(page, job_url, cover_letter, custom_answers, personal_info, resume_path)
             elif ats == "workday":
-                await _fill_workday(page, job_url, cover_letter, custom_answers, personal_info, resume_path)
+                await _fill_workday(page, job_url, cover_letter, custom_answers, personal_info, resume_path, _fill_states[job_id])
+            elif ats == "smartrecruiters":
+                await _fill_smartrecruiters(page, job_url, cover_letter, custom_answers, personal_info, resume_path)
             else:
                 await page.goto(job_url)
                 _fill_states[job_id]["message"] = "Unknown ATS — please fill the form manually"
@@ -329,8 +331,36 @@ async def _fill_ashby(page: Page, job_url: str, cover_letter: str,
 
 # ── Workday ───────────────────────────────────────────────────────────────
 
+_WORKDAY_NEXT = (
+    "[data-automation-id='bottom-navigation-next-button'],"
+    "[data-automation-id='pageFooter'] button:has-text('Next'),"
+    "button[aria-label='Next'],"
+    "button:has-text('Next')"
+)
+_WORKDAY_SAVE_CONTINUE = (
+    "button:has-text('Save and Continue'),"
+    "button:has-text('Save & Continue')"
+)
+
+
+async def _workday_next_page(page: Page) -> bool:
+    """Click the Workday Next/Save-and-Continue button. Returns True if clicked."""
+    for sel in [_WORKDAY_NEXT, _WORKDAY_SAVE_CONTINUE]:
+        btn = page.locator(sel).first
+        if await btn.count() > 0 and await btn.is_enabled():
+            await btn.click()
+            await _delay(2, 4)
+            try:
+                await page.wait_for_load_state("networkidle", timeout=8000)
+            except Exception:
+                pass
+            return True
+    return False
+
+
 async def _fill_workday(page: Page, job_url: str, cover_letter: str,
-                         custom_answers: dict, info: dict, resume_path: str | None):
+                         custom_answers: dict, info: dict, resume_path: str | None,
+                         state: dict):
     await page.goto(job_url, wait_until="domcontentloaded")
     await _delay(3, 5)
 
@@ -346,26 +376,160 @@ async def _fill_workday(page: Page, job_url: str, cover_letter: str,
         await manual.click()
         await _delay(2, 3)
 
-    await page.wait_for_load_state("networkidle")
+    try:
+        await page.wait_for_load_state("networkidle", timeout=10000)
+    except Exception:
+        pass
     await _delay(2, 3)
 
-    # Upload resume first — Workday often asks for it on page 1
+    # ── Page 1: Resume + basic contact ────────────────────────────────────
+    state["message"] = "Workday: filling page 1 (resume + contact)..."
     await _try_upload(page, ["input[type='file']"], resume_path or "")
+    await _delay(1, 2)
 
-    # Fill standard fields by label (Workday uses aria-label and label text)
     await _fill_by_label(page, "First Name", info.get("first_name", ""))
     await _fill_by_label(page, "Last Name", info.get("last_name", ""))
     await _fill_by_label(page, "Email Address", info.get("email", ""))
     await _fill_by_label(page, "Email", info.get("email", ""))
     await _fill_by_label(page, "Phone Number", info.get("phone", ""))
     await _fill_by_label(page, "Phone", info.get("phone", ""))
-
     if info.get("city"):
         await _fill_by_label(page, "City", info["city"])
     if info.get("state"):
         await _fill_by_label(page, "State", info["state"])
 
-    # Workday is multi-step — we fill page 1 and leave the rest for the user
+    # Advance through subsequent pages (up to 6 steps)
+    for step in range(2, 8):
+        advanced = await _workday_next_page(page)
+        if not advanced:
+            break
+
+        await _delay(1, 2)
+        state["message"] = f"Workday: filling page {step}..."
+
+        # My Information / address fields
+        await _fill_by_label(page, "Address Line 1", info.get("city", ""))
+        await _fill_by_label(page, "City", info.get("city", ""))
+        await _fill_by_label(page, "State", info.get("state", ""))
+        await _fill_by_label(page, "Postal Code", "")
+
+        # LinkedIn / social
+        if info.get("linkedin_url"):
+            await _fill_by_label(page, "LinkedIn", info["linkedin_url"])
+            await _fill_by_label(page, "LinkedIn URL", info["linkedin_url"])
+
+        # Work authorization — try radio "Yes" and common dropdowns
+        if info.get("work_authorized"):
+            auth = page.locator(
+                "input[type='radio'][value*='Yes'], input[type='radio'][value*='yes'],"
+                "input[type='radio'][aria-label*='authorized']"
+            )
+            if await auth.count() > 0:
+                await auth.first.check()
+                await _delay()
+
+        # EEO / Self-identify — choose "Decline to Identify" / "I don't wish to answer"
+        for decline_label in ["Decline to Identify", "I don't wish to answer",
+                               "Prefer not to disclose", "Prefer Not to Answer",
+                               "I do not wish to answer"]:
+            opt = page.locator(
+                f"label:has-text('{decline_label}'), "
+                f"option:has-text('{decline_label}')"
+            ).first
+            if await opt.count() > 0:
+                tag = await opt.evaluate("el => el.tagName.toLowerCase()")
+                if tag == "label":
+                    inp = page.locator(f"input[id='{await opt.get_attribute('for')}']").first
+                    if await inp.count() > 0:
+                        await inp.check()
+                        await _delay()
+                elif tag == "option":
+                    await opt.evaluate("el => { el.selected = true; el.parentElement.dispatchEvent(new Event('change')); }")
+                    await _delay()
+
+        # Application / custom questions
+        if custom_answers:
+            await _fill_custom_questions(page, custom_answers, [
+                "[data-automation-id='formField']",
+                ".css-1vg6q84",   # Workday question wrapper (common class)
+                "[class*='formField']",
+            ])
+            for question, answer in custom_answers.items():
+                await _fill_by_label(page, question, str(answer), fuzzy=True)
+
+        # Cover letter if a textarea appears
+        if cover_letter:
+            await _try_fill(page, [
+                "textarea[data-automation-id*='cover']",
+                "textarea[placeholder*='cover']",
+                "textarea[placeholder*='Cover']",
+            ], cover_letter)
+
+
+# ── SmartRecruiters ───────────────────────────────────────────────────────
+
+async def _fill_smartrecruiters(page: Page, job_url: str, cover_letter: str,
+                                  custom_answers: dict, info: dict, resume_path: str | None):
+    await page.goto(job_url, wait_until="domcontentloaded")
+    await _delay(2, 3)
+
+    # Click Apply / Apply for this job button
+    apply_btn = page.locator(
+        "button:has-text('Apply for this job'), a:has-text('Apply for this job'),"
+        "button:has-text('Apply Now'), a:has-text('Apply Now'),"
+        "button:has-text('Apply'), a:has-text('Apply')"
+    ).first
+    if await apply_btn.count() > 0:
+        await apply_btn.click()
+        await _delay(2, 3)
+        try:
+            await page.wait_for_selector("input[name='firstName'], input[id='firstName']", timeout=10000)
+        except Exception:
+            pass
+
+    # Personal info — SmartRecruiters uses name/id attributes consistently
+    await _try_fill(page, [
+        "input[name='firstName']", "input[id='firstName']",
+        "input[placeholder*='First Name']", "input[placeholder*='first name']",
+    ], info.get("first_name", ""))
+
+    await _try_fill(page, [
+        "input[name='lastName']", "input[id='lastName']",
+        "input[placeholder*='Last Name']", "input[placeholder*='last name']",
+    ], info.get("last_name", ""))
+
+    await _try_fill(page, [
+        "input[name='email']", "input[type='email']", "input[id='email']",
+    ], info.get("email", ""))
+
+    await _try_fill(page, [
+        "input[name='phone']", "input[type='tel']", "input[id='phone']",
+        "input[placeholder*='phone']", "input[placeholder*='Phone']",
+    ], info.get("phone", ""))
+
+    if info.get("linkedin_url"):
+        await _try_fill(page, [
+            "input[name='web[LinkedIn]']", "input[placeholder*='LinkedIn']",
+            "input[id*='linkedin']",
+        ], info["linkedin_url"])
+
+    # Resume upload
+    await _try_upload(page, ["input[type='file']"], resume_path or "")
+
+    # Cover letter — SmartRecruiters calls this "message" or shows a textarea
+    if cover_letter:
+        await _try_fill(page, [
+            "textarea[name='message']", "textarea[id='message']",
+            "textarea[placeholder*='cover']", "textarea[placeholder*='Cover']",
+            "textarea[placeholder*='letter']", "textarea",
+        ], cover_letter)
+
+    # Custom questions
+    await _fill_custom_questions(page, custom_answers, [
+        ".form-group", "[class*='question']", ".field", "[class*='formField']",
+    ])
+    for question, answer in custom_answers.items():
+        await _fill_by_label(page, question, str(answer), fuzzy=True)
 
 
 # ── Generic custom question filler ────────────────────────────────────────
