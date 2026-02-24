@@ -8,16 +8,8 @@ from playwright.async_api import async_playwright
 from config import HEADLESS
 
 
-async def _delay(min_s: float = 1.5, max_s: float = 3.0):
+async def _delay(min_s: float = 2.0, max_s: float = 4.0):
     await asyncio.sleep(random.uniform(min_s, max_s))
-
-
-def _strip_html(text: str) -> str:
-    if not text:
-        return ""
-    text = re.sub(r"<[^>]+>", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
 
 
 class DiceCrawler:
@@ -48,70 +40,69 @@ class DiceCrawler:
                     if len(results) >= max_jobs:
                         break
                     q = urllib.parse.quote_plus(kw)
-                    url = f"https://www.dice.com/jobs?q={q}&countryCode=US&location=United+States&locationPrecision=Country&language=en"
+                    url = (
+                        f"https://www.dice.com/jobs?q={q}"
+                        f"&countryCode=US&language=en"
+                    )
                     try:
-                        await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-                        await _delay(3, 5)
+                        await page.goto(url, wait_until="networkidle", timeout=30000)
+                        await _delay(2, 4)
 
-                        # Wait for job cards to load
-                        try:
-                            await page.wait_for_selector(
-                                "dhi-search-cards-widget, .card-title-link, [data-cy='search-result-list']",
-                                timeout=10000,
-                            )
-                        except Exception:
-                            pass
-
-                        # Extract job cards
-                        cards = await page.query_selector_all(
-                            "div[data-cy='search-result-list'] > *, "
-                            ".search-card, dhi-search-card, "
-                            "[data-testid='job-card']"
-                        )
-
-                        if not cards:
-                            # Try alternate selectors
-                            cards = await page.query_selector_all(
-                                "a.card-title-link, "
-                                "[class*='job-card'], "
-                                "article[class*='card']"
-                            )
+                        cards = await page.query_selector_all('[data-testid="job-card"]')
+                        print(f"[Dice] kw={kw!r}: {len(cards)} cards")
 
                         for card in cards:
                             try:
-                                # Title + link
+                                # Title from aria-label of main overlay link
                                 link_el = await card.query_selector(
-                                    "a.card-title-link, a[data-cy='card-title-link'], "
-                                    "h5 a, h2 a, [class*='title'] a"
+                                    'a[data-testid="job-search-job-card-link"]'
                                 )
-                                if not link_el:
-                                    link_el = await card.query_selector("a[href]")
                                 if not link_el:
                                     continue
 
-                                title = (await link_el.inner_text()).strip()
-                                href = (await link_el.get_attribute("href") or "").strip()
-                                if not href:
-                                    continue
-                                if href.startswith("/"):
-                                    href = "https://www.dice.com" + href
-                                if href in seen:
+                                aria = await link_el.get_attribute("aria-label") or ""
+                                # "View Details for {title} ({guid})"
+                                m = re.match(
+                                    r"^View Details for (.+?) \([a-f0-9\-]+\)$", aria
+                                )
+                                title = m.group(1) if m else aria
+
+                                href = (await link_el.get_attribute("href") or "").split("?")[0]
+                                if not href or href in seen:
                                     continue
                                 seen.add(href)
 
-                                # Company
-                                co_el = await card.query_selector(
-                                    "[data-cy='search-result-company-name'], "
-                                    ".company-name, [class*='company']"
+                                # Company from company-profile link's companyname param
+                                company = ""
+                                co_link = await card.query_selector(
+                                    'a[href*="company-profile"]'
                                 )
-                                company = (await co_el.inner_text()).strip() if co_el else "Dice"
+                                if co_link:
+                                    co_href = await co_link.get_attribute("href") or ""
+                                    m2 = re.search(r"companyname=([^&]+)", co_href)
+                                    if m2:
+                                        company = urllib.parse.unquote_plus(m2.group(1))
 
-                                # Location
-                                loc_el = await card.query_selector(
-                                    "[data-cy='search-result-location'], "
-                                    ".location, [class*='location']"
-                                )
-                                location_str = (await loc_el.inner_text()).strip() if loc_el else ""
+                                # Location from card inner text (appears after title)
+                                card_text = await card.inner_text()
+                                location_str = ""
+                                if title and title in card_text:
+                                    after_title = card_text[card_text.index(title) + len(title):]
+                                    # Location is the first non-empty line after the title
+                                    for line in after_title.splitlines():
+                                        line = line.strip()
+                                        if line and not line.startswith("Easy Apply") \
+                                                and not line.startswith("Apply Now"):
+                                            # Filter out emoji/icon lines
+                                            if re.match(r'^[\w ,\.\-]+$', line):
+                                                location_str = line
+                                                break
+
+                                # Description teaser from card text (last paragraph)
+                                desc = ""
+                                lines = [l.strip() for l in card_text.splitlines() if l.strip()]
+                                if len(lines) > 4:
+                                    desc = " ".join(lines[4:])[:500]
 
                                 if title:
                                     results.append({
@@ -119,18 +110,19 @@ class DiceCrawler:
                                         "company": company,
                                         "location": location_str,
                                         "salary": "",
-                                        "description": "",
+                                        "description": desc,
                                         "url": href,
                                         "posted_date": "",
                                     })
                             except Exception:
                                 pass
 
-                        await _delay(2, 4)
+                        await _delay(2, 3)
                     except Exception as e:
                         print(f"[Dice] Error for keyword {kw!r}: {e}")
                         continue
             finally:
                 await browser.close()
 
+        print(f"[Dice] Total found: {len(results)} jobs")
         return results[:max_jobs]
