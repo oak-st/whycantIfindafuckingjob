@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 const ExternalLinkIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -90,11 +90,20 @@ const autoFillStatus = (url = '') => {
 
 const sp = (fn) => (e) => { e.stopPropagation(); fn(e) }
 
+const ChevronIcon = ({ open }) => (
+  <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+    viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+    strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+)
+
 export default function JobCard({
   job, onStatusChange, onApply, onView,
   isNew = false, compact = false,
   selected, onSelect, hidden = false,
 }) {
+  const [expanded, setExpanded] = useState(false)
   const cleanDesc = stripHtml(job.description)
   const badge = SOURCE_COLORS[job.source] || 'bg-[#252d38] text-slate-300'
   const autofill = autoFillStatus(job.url)
@@ -273,12 +282,15 @@ export default function JobCard({
   // ── Normal (grid) card ───────────────────────────────────────────────────────
   return (
     <div
-      onClick={() => selectable && onSelect(job.id)}
+      onClick={() => {
+        if (selectable) onSelect(job.id)
+        else setExpanded(e => !e)
+      }}
       className={`
         bg-[#1c2026] border rounded-xl p-4 space-y-3 transition-all
         ${statusColors[job.status] || 'border-[#2a3241]'}
         ${selected ? 'ring-1 ring-blue-500/50 ring-offset-1 ring-offset-[#121212]' : ''}
-        ${selectable ? 'cursor-pointer hover:border-[#334155]' : ''}
+        ${selectable ? 'cursor-pointer hover:border-[#334155]' : 'cursor-pointer hover:border-[#334155]'}
       `}
     >
       <div className="flex items-start justify-between gap-2">
@@ -358,9 +370,18 @@ export default function JobCard({
       </div>
 
       {cleanDesc && (
-        <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
-          {cleanDesc}
-        </p>
+        <div
+          onClick={sp(() => setExpanded(e => !e))}
+          className="cursor-pointer group"
+        >
+          <p className={`text-xs text-slate-500 leading-relaxed whitespace-pre-line ${expanded ? '' : 'line-clamp-3'}`}>
+            {cleanDesc}
+          </p>
+          <div className="flex items-center gap-1 mt-1 text-slate-600 group-hover:text-slate-400 transition-colors">
+            <ChevronIcon open={expanded} />
+            <span className="text-[10px]">{expanded ? 'collapse' : 'expand'}</span>
+          </div>
+        </div>
       )}
 
       {job.status !== 'applied' && (
