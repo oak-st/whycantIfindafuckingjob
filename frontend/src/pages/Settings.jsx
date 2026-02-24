@@ -267,15 +267,15 @@ export default function Settings() {
       <Section title="Personal Info (Auto-fill)">
         <p className="text-xs text-slate-500 -mt-1">Used to fill application forms automatically</p>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="First Name" value={form.first_name} onChange={set('first_name')} placeholder="Jane" />
-          <Field label="Last Name" value={form.last_name} onChange={set('last_name')} placeholder="Smith" />
+          <Field label="First Name" value={form.first_name} onChange={set('first_name')} />
+          <Field label="Last Name" value={form.last_name} onChange={set('last_name')} />
         </div>
-        <Field label="Email" type="email" value={form.email} onChange={set('email')} placeholder="jane@example.com" />
-        <Field label="Phone" type="tel" value={form.phone} onChange={set('phone')} placeholder="(555) 555-5555" />
-        <Field label="LinkedIn URL" value={form.linkedin_url} onChange={set('linkedin_url')} placeholder="https://linkedin.com/in/yourname" />
+        <Field label="Email" type="email" value={form.email} onChange={set('email')} />
+        <Field label="Phone" type="tel" value={form.phone} onChange={set('phone')} />
+        <Field label="LinkedIn URL" value={form.linkedin_url} onChange={set('linkedin_url')} />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="City" value={form.city} onChange={set('city')} placeholder="Miami" />
-          <Field label="State" value={form.state} onChange={set('state')} placeholder="FL" />
+          <Field label="City" value={form.city} onChange={set('city')} />
+          <Field label="State" value={form.state} onChange={set('state')} />
         </div>
         <div className="flex items-center gap-3">
           <input
