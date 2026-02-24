@@ -2,6 +2,17 @@ import React, { useEffect, useState } from 'react'
 
 const API = '/api'
 
+const EyeIcon = ({ open }) => open ? (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+) : (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+  </svg>
+)
+
 function Field({ label, type = 'text', value, onChange, placeholder, hint }) {
   return (
     <div>
@@ -14,6 +25,34 @@ function Field({ label, type = 'text', value, onChange, placeholder, hint }) {
         className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-sm text-slate-100
                    placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
       />
+      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
+    </div>
+  )
+}
+
+function SecretField({ label, value, onChange, placeholder, hint }) {
+  const [show, setShow] = useState(false)
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
+      <div className="relative">
+        <input
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 pr-10 text-sm text-slate-100
+                     placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+        />
+        <button
+          type="button"
+          onClick={() => setShow(s => !s)}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+          tabIndex={-1}
+        >
+          <EyeIcon open={show} />
+        </button>
+      </div>
       {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
     </div>
   )
@@ -50,6 +89,7 @@ export default function Settings() {
     linkedin_url: '',
     city: '',
     state: '',
+    zip_code: '',
     work_authorized: true,
   })
   const [resumeFile, setResumeFile] = useState(null)
@@ -58,6 +98,8 @@ export default function Settings() {
   const [uploadingResume, setUploadingResume] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [hasSavedApiKey, setHasSavedApiKey] = useState(false)
+  const [hasSavedGlassdoor, setHasSavedGlassdoor] = useState(false)
 
   const loadSettings = () =>
     fetch(`${API}/settings`)
@@ -65,6 +107,9 @@ export default function Settings() {
       .then(data => {
         setForm(f => ({
           ...f,
+          anthropic_api_key: data.anthropic_api_key_value || '',
+          glassdoor_email: data.glassdoor_email_value || '',
+          glassdoor_password: data.glassdoor_password_value || '',
           search_keywords: data.search_keywords || f.search_keywords,
           exclude_keywords: data.exclude_keywords ?? '',
           search_location: data.search_location || f.search_location,
@@ -82,12 +127,12 @@ export default function Settings() {
           linkedin_url: data.linkedin_url || '',
           city: data.city || '',
           state: data.state || '',
+          zip_code: data.zip_code || '',
           work_authorized: data.work_authorized ?? true,
         }))
         setResumeFilename(data.resume_filename || '')
-        if (data.has_glassdoor_credentials) {
-          setForm(f => ({ ...f, glassdoor_email: f.glassdoor_email || '(saved)' }))
-        }
+        setHasSavedApiKey(data.has_anthropic_api_key ?? false)
+        setHasSavedGlassdoor(data.has_glassdoor_credentials ?? false)
       })
       .catch(() => {})
 
@@ -101,7 +146,7 @@ export default function Settings() {
     try {
       const body = {}
       if (form.anthropic_api_key) body.anthropic_api_key = form.anthropic_api_key
-      if (form.glassdoor_email && form.glassdoor_email !== '(saved)') body.glassdoor_email = form.glassdoor_email
+      if (form.glassdoor_email) body.glassdoor_email = form.glassdoor_email
       if (form.glassdoor_password) body.glassdoor_password = form.glassdoor_password
       body.search_keywords = form.search_keywords
       body.exclude_keywords = form.exclude_keywords
@@ -120,6 +165,7 @@ export default function Settings() {
       body.linkedin_url = form.linkedin_url
       body.city = form.city
       body.state = form.state
+      body.zip_code = form.zip_code
       body.work_authorized = form.work_authorized
 
       const res = await fetch(`${API}/settings`, {
@@ -161,16 +207,27 @@ export default function Settings() {
       <h1 className="text-xl font-bold text-white">Settings</h1>
 
       <Section title="AI (Cover Letters)">
-        <Field label="Anthropic API Key" type="password" value={form.anthropic_api_key} onChange={set('anthropic_api_key')}
-          placeholder="sk-ant-..." hint="Used for generating cover letters and custom answers" />
+        {hasSavedApiKey && (
+          <div className="flex items-center gap-2 text-xs text-green-400 bg-green-950/40 border border-green-800 rounded-lg px-3 py-2">
+            <span>✓</span>
+            <span>API key saved — use the eye icon to verify, or type a new key to replace it</span>
+          </div>
+        )}
+        <SecretField label="Anthropic API Key" value={form.anthropic_api_key} onChange={set('anthropic_api_key')}
+          placeholder="sk-ant-..." hint="Used for generating cover letters and relevance scoring" />
       </Section>
 
       <Section title="Glassdoor">
         <p className="text-xs text-slate-500 -mt-1">Optional — enables crawling Glassdoor job listings. Credentials are encrypted and stored locally.</p>
-        <Field label="Glassdoor Email" type="email" value={form.glassdoor_email === '(saved)' ? '' : form.glassdoor_email}
-          onChange={set('glassdoor_email')} placeholder="your@email.com"
-          hint={form.glassdoor_email === '(saved)' ? '✓ Credentials saved — enter new values to update' : ''} />
-        <Field label="Glassdoor Password" type="password" value={form.glassdoor_password}
+        {hasSavedGlassdoor && (
+          <div className="flex items-center gap-2 text-xs text-green-400 bg-green-950/40 border border-green-800 rounded-lg px-3 py-2">
+            <span>✓</span>
+            <span>Credentials saved — use the eye icon to verify, or type new values to replace them</span>
+          </div>
+        )}
+        <Field label="Glassdoor Email" type="email" value={form.glassdoor_email}
+          onChange={set('glassdoor_email')} placeholder="your@email.com" />
+        <SecretField label="Glassdoor Password" value={form.glassdoor_password}
           onChange={set('glassdoor_password')} placeholder="••••••••" />
       </Section>
 
@@ -290,9 +347,10 @@ export default function Settings() {
         <Field label="Email" type="email" value={form.email} onChange={set('email')} />
         <Field label="Phone" type="tel" value={form.phone} onChange={set('phone')} />
         <Field label="LinkedIn URL" value={form.linkedin_url} onChange={set('linkedin_url')} />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Field label="City" value={form.city} onChange={set('city')} />
           <Field label="State" value={form.state} onChange={set('state')} />
+          <Field label="ZIP Code" value={form.zip_code} onChange={set('zip_code')} placeholder="e.g. 10001" />
         </div>
         <div className="flex items-center gap-3">
           <input

@@ -80,6 +80,7 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
     setFillStatus('starting')
     setFillMessage('Starting browser...')
     setError('')
+    if (pollRef.current) clearInterval(pollRef.current)
     try {
       const res = await fetch(`${API}/apply/${job.id}/automate`, {
         method: 'POST',
@@ -216,13 +217,24 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
                 : fillStatus === 'error' ? 'bg-red-950 border-red-900 text-red-300'
                 : 'bg-[#252d38] border-[#334155] text-slate-300'
               }`}>
-                <div className="flex items-center gap-2">
-                  {isFilling && <span className="animate-spin">⟳</span>}
-                  {isFilled && <span>✓</span>}
-                  <span>
-                    {fillAts && <span className="font-semibold mr-1">{ATS_LABELS[fillAts] || fillAts}:</span>}
-                    {fillMessage}
-                  </span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {isFilling && <span className="animate-spin">⟳</span>}
+                    {isFilled && <span>✓</span>}
+                    {fillStatus === 'error' && <span>✕</span>}
+                    <span>
+                      {fillAts && <span className="font-semibold mr-1">{ATS_LABELS[fillAts] || fillAts}:</span>}
+                      {fillMessage}
+                    </span>
+                  </div>
+                  {fillStatus === 'error' && (
+                    <button
+                      onClick={() => { setFillStatus('idle'); setFillMessage('') }}
+                      className="shrink-0 px-2 py-1 rounded bg-red-900 hover:bg-red-800 text-red-200 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  )}
                 </div>
               </div>
             )}

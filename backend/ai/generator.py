@@ -10,8 +10,6 @@ async def generate_cover_letter(
     job_description: str,
     resume_text: str = "",
 ) -> str:
-    client = anthropic.Anthropic(api_key=api_key)
-
     resume_section = f"\n\nMy resume:\n{resume_text[:4000]}" if resume_text else ""
 
     prompt = f"""Write a concise, professional cover letter for the following job.
@@ -31,11 +29,12 @@ Instructions:
 - Keep it under 300 words
 - Do not include date, address headers, or "Dear Hiring Manager" — just the body paragraphs"""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=600,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    async with anthropic.AsyncAnthropic(api_key=api_key) as client:
+        message = await client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=600,
+            messages=[{"role": "user", "content": prompt}],
+        )
     return message.content[0].text.strip()
 
 
@@ -47,8 +46,6 @@ async def score_job_relevance(
     resume_text: str = "",
 ) -> int:
     """Return a relevance score 1–10 for how well a job matches the candidate."""
-    client = anthropic.AsyncAnthropic(api_key=api_key)
-
     resume_section = f"\n\nCandidate resume:\n{resume_text[:3000]}" if resume_text else ""
 
     prompt = (
@@ -61,11 +58,12 @@ async def score_job_relevance(
         f"Score (1 = poor match, 10 = perfect match):"
     )
 
-    message = await client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=5,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    async with anthropic.AsyncAnthropic(api_key=api_key) as client:
+        message = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=5,
+            messages=[{"role": "user", "content": prompt}],
+        )
     raw = message.content[0].text.strip()
     match = re.search(r"\d+", raw)
     score = int(match.group()) if match else 5
@@ -80,8 +78,6 @@ async def generate_custom_answer(
     job_description: str,
     resume_text: str = "",
 ) -> str:
-    client = anthropic.Anthropic(api_key=api_key)
-
     resume_section = f"\n\nMy resume:\n{resume_text[:3000]}" if resume_text else ""
 
     prompt = f"""Answer the following job application question concisely and professionally.
@@ -98,9 +94,10 @@ Instructions:
 - First-person voice
 - No fluff"""
 
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=200,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    async with anthropic.AsyncAnthropic(api_key=api_key) as client:
+        message = await client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}],
+        )
     return message.content[0].text.strip()

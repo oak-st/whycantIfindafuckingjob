@@ -67,6 +67,7 @@ class SettingsIn(BaseModel):
     linkedin_url: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
+    zip_code: Optional[str] = None
     work_authorized: Optional[bool] = None
     # Glassdoor credentials
     glassdoor_email: Optional[str] = None
@@ -94,7 +95,12 @@ class SettingsOut(BaseModel):
     linkedin_url: str = ""
     city: str = ""
     state: str = ""
+    zip_code: str = ""
     work_authorized: bool = True
+    # Credentials (decrypted, returned for local UI verification only)
+    anthropic_api_key_value: str = ""
+    glassdoor_email_value: str = ""
+    glassdoor_password_value: str = ""
     # Glassdoor
     has_glassdoor_credentials: bool = False
 

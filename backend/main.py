@@ -10,10 +10,10 @@ from typing import List, Optional
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import aiofiles
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -37,6 +37,54 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Auth middleware ───────────────────────────────────────────────────────────
+
+_PUBLIC_PATHS = {"/api/auth/login"}
+
+@app.middleware("http")
+async def _auth_middleware(request: Request, call_next):
+    if request.url.path in _PUBLIC_PATHS or not request.url.path.startswith("/api/"):
+        return await call_next(request)
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
+    from auth import decode_token
+    try:
+        decode_token(auth[7:])
+    except Exception:
+        return JSONResponse(status_code=401, content={"detail": "Invalid or expired token"})
+    return await call_next(request)
+
+
+# ── Auth routes ───────────────────────────────────────────────────────────────
+
+@app.post("/api/auth/login")
+def login(body: dict, db: Session = Depends(get_db)):
+    from auth import admin_username, admin_password, verify_password, create_token, decrypt as _
+    entered_user = body.get("username", "")
+    entered_pass = body.get("password", "")
+    if entered_user != admin_username():
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    # Check DB-stored password first (if changed via settings), then env var
+    s = _load_settings(db)
+    db_pass = decrypt(s.get("admin_password_enc", ""))
+    valid = (
+        (db_pass and verify_password(entered_pass, db_pass))
+        or (not db_pass and entered_pass == admin_password())
+    )
+    if not valid:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    return {"token": create_token(entered_user), "username": entered_user}
+
+
+@app.get("/api/auth/me")
+def me(request: Request):
+    from auth import decode_token
+    token = request.headers.get("Authorization", "")[7:]
+    username = decode_token(token)
+    return {"username": username}
+
 
 # Track crawl state
 crawl_state = {"running": False, "message": "Idle", "jobs_found": 0, "log": [], "current_source": None, "total_sources": 0, "cancel_requested": False}
@@ -189,17 +237,22 @@ def list_jobs(
     source: Optional[str] = None,
     salary_min: Optional[int] = None,
     salary_max: Optional[int] = None,
+    limit: int = 1000,
+    offset: int = 0,
     db: Session = Depends(get_db),
 ):
+    limit = min(limit, 2000)  # hard cap
     q = db.query(Job)
     if status:
         q = q.filter(Job.status == status)
     if source:
         q = q.filter(Job.source == source)
-    jobs = q.order_by(Job.crawled_at.desc()).all()
+    q = q.order_by(Job.crawled_at.desc())
     if salary_min is not None or salary_max is not None:
+        # Salary filtering must be done in Python since salary is an unstructured string
+        all_jobs = q.all()
         filtered = []
-        for job in jobs:
+        for job in all_jobs:
             parsed = _parse_salary_min(job.salary)
             if parsed is None:
                 filtered.append(job)  # no salary listed — always include
@@ -209,8 +262,8 @@ def list_jobs(
                 if salary_max is not None and parsed > salary_max:
                     continue
                 filtered.append(job)
-        return filtered
-    return jobs
+        return filtered[offset: offset + limit]
+    return q.offset(offset).limit(limit).all()
 
 
 @app.patch("/api/jobs/{job_id}", response_model=JobOut)
@@ -239,7 +292,11 @@ def dismiss_jobs(
     if source and source != "all":
         q = q.filter(Job.source == source)
     count = q.update({"status": "skipped"}, synchronize_session=False)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"DB error: {e}")
     return {"dismissed": count}
 
 
@@ -309,8 +366,8 @@ async def _async_crawl():
 
         def _on_company_done(name: str, count: int, error: bool = False):
             crawl_state["log"].append({"source": name, "count": count, "error": error})
-            if len(crawl_state["log"]) > 200:
-                crawl_state["log"] = crawl_state["log"][-200:]
+            if len(crawl_state["log"]) > 1000:
+                crawl_state["log"] = crawl_state["log"][-1000:]
             crawl_state["current_source"] = None
 
         try:
@@ -542,6 +599,7 @@ async def automate_apply(job_id: int, body: ApplySubmit,
         "linkedin_url":   settings.get("linkedin_url", ""),
         "city":           settings.get("city", ""),
         "state":          settings.get("state", ""),
+        "zip_code":       settings.get("zip_code", ""),
         "work_authorized": settings.get("work_authorized", "true") == "true",
     }
 
@@ -637,7 +695,11 @@ def get_settings(db: Session = Depends(get_db)):
         linkedin_url=s.get("linkedin_url", ""),
         city=s.get("city", ""),
         state=s.get("state", ""),
+        zip_code=s.get("zip_code", ""),
         work_authorized=s.get("work_authorized", "true") == "true",
+        anthropic_api_key_value=decrypt(s.get("anthropic_api_key_enc", "")),
+        glassdoor_email_value=s.get("glassdoor_email", ""),
+        glassdoor_password_value=decrypt(s.get("glassdoor_password_enc", "")),
         has_glassdoor_credentials=bool(s.get("glassdoor_email") and s.get("glassdoor_password_enc")),
     )
 
@@ -666,7 +728,7 @@ def save_settings(body: SettingsIn, db: Session = Depends(get_db)):
         _set(db, "auto_crawl_interval_hours", str(body.auto_crawl_interval_hours))
     if body.show_browser is not None:
         _set(db, "show_browser", "true" if body.show_browser else "false")
-    for field in ("first_name", "last_name", "email", "phone", "linkedin_url", "city", "state"):
+    for field in ("first_name", "last_name", "email", "phone", "linkedin_url", "city", "state", "zip_code"):
         val = getattr(body, field, None)
         if val is not None:
             _set(db, field, val)

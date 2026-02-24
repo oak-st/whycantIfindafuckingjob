@@ -7,7 +7,7 @@ echo "Starting Job Hunter..."
 
 # Start backend
 cd "$SCRIPT_DIR/backend"
-python3.11 -m uvicorn main:app --reload --port 8000 &
+python3 -m uvicorn main:app --reload --port 8000 &
 BACKEND_PID=$!
 
 # Start frontend

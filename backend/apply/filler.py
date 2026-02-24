@@ -411,7 +411,7 @@ async def _fill_workday(page: Page, job_url: str, cover_letter: str,
         await _fill_by_label(page, "Address Line 1", info.get("city", ""))
         await _fill_by_label(page, "City", info.get("city", ""))
         await _fill_by_label(page, "State", info.get("state", ""))
-        await _fill_by_label(page, "Postal Code", "")
+        await _fill_by_label(page, "Postal Code", info.get("zip_code", ""))
 
         # LinkedIn / social
         if info.get("linkedin_url"):
