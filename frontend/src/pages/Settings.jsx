@@ -41,6 +41,14 @@ export default function Settings() {
     auto_crawl_enabled: false,
     auto_crawl_interval_hours: 24,
     show_browser: false,
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    linkedin_url: '',
+    city: '',
+    state: '',
+    work_authorized: true,
   })
   const [resumeFile, setResumeFile] = useState(null)
   const [resumeFilename, setResumeFilename] = useState('')
@@ -65,6 +73,14 @@ export default function Settings() {
           auto_crawl_enabled: data.auto_crawl_enabled ?? false,
           auto_crawl_interval_hours: data.auto_crawl_interval_hours ?? 24,
           show_browser: data.show_browser ?? false,
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          linkedin_url: data.linkedin_url || '',
+          city: data.city || '',
+          state: data.state || '',
+          work_authorized: data.work_authorized ?? true,
         }))
         setResumeFilename(data.resume_filename || '')
       })
@@ -90,6 +106,14 @@ export default function Settings() {
       body.auto_crawl_enabled = form.auto_crawl_enabled
       body.auto_crawl_interval_hours = form.auto_crawl_interval_hours
       body.show_browser = form.show_browser
+      body.first_name = form.first_name
+      body.last_name = form.last_name
+      body.email = form.email
+      body.phone = form.phone
+      body.linkedin_url = form.linkedin_url
+      body.city = form.city
+      body.state = form.state
+      body.work_authorized = form.work_authorized
 
       const res = await fetch(`${API}/settings`, {
         method: 'POST',
@@ -237,6 +261,33 @@ export default function Settings() {
               Turn off for silent background crawls.
             </p>
           </div>
+        </div>
+      </Section>
+
+      <Section title="Personal Info (Auto-fill)">
+        <p className="text-xs text-slate-500 -mt-1">Used to fill application forms automatically</p>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="First Name" value={form.first_name} onChange={set('first_name')} placeholder="Jane" />
+          <Field label="Last Name" value={form.last_name} onChange={set('last_name')} placeholder="Smith" />
+        </div>
+        <Field label="Email" type="email" value={form.email} onChange={set('email')} placeholder="jane@example.com" />
+        <Field label="Phone" type="tel" value={form.phone} onChange={set('phone')} placeholder="(555) 555-5555" />
+        <Field label="LinkedIn URL" value={form.linkedin_url} onChange={set('linkedin_url')} placeholder="https://linkedin.com/in/yourname" />
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="City" value={form.city} onChange={set('city')} placeholder="Miami" />
+          <Field label="State" value={form.state} onChange={set('state')} placeholder="FL" />
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="work_authorized"
+            checked={form.work_authorized}
+            onChange={e => set('work_authorized')(e.target.checked)}
+            className="w-4 h-4 rounded accent-blue-500"
+          />
+          <label htmlFor="work_authorized" className="text-sm font-medium text-slate-300">
+            Authorized to work in the United States
+          </label>
         </div>
       </Section>
 

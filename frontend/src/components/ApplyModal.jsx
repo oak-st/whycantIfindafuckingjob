@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 
 const stripHtml = (html) => {
   if (!html) return ''
@@ -21,11 +21,26 @@ const stripHtml = (html) => {
 
 const API = '/api'
 
+const ATS_LABELS = {
+  greenhouse: 'Greenhouse',
+  lever: 'Lever',
+  ashby: 'Ashby',
+  workday: 'Workday',
+  smartrecruiters: 'SmartRecruiters',
+  unknown: 'Unknown ATS',
+}
+
 export default function ApplyModal({ job, onClose, onSubmitted }) {
   const [draft, setDraft] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  // Auto-fill state
+  const [fillStatus, setFillStatus] = useState('idle') // idle | starting | filling | filled | error
+  const [fillMessage, setFillMessage] = useState('')
+  const [fillAts, setFillAts] = useState('')
+  const pollRef = useRef(null)
 
   useEffect(() => {
     setLoading(true)
@@ -35,15 +50,68 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
         if (!r.ok) throw new Error('Failed to generate draft')
         return r.json()
       })
-      .then(data => {
-        setDraft(data)
-        setLoading(false)
-      })
-      .catch(e => {
-        setError(e.message)
-        setLoading(false)
-      })
+      .then(data => { setDraft(data); setLoading(false) })
+      .catch(e => { setError(e.message); setLoading(false) })
   }, [job.id])
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+  }, [])
+
+  const startPoll = () => {
+    if (pollRef.current) clearInterval(pollRef.current)
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`${API}/apply/${job.id}/automate/status`)
+        const data = await res.json()
+        setFillStatus(data.status === 'idle' ? 'idle' : data.status)
+        setFillMessage(data.message || '')
+        setFillAts(data.ats || fillAts)
+        if (data.status === 'filled' || data.status === 'error' || data.status === 'idle') {
+          clearInterval(pollRef.current)
+        }
+      } catch { /* ignore */ }
+    }, 1500)
+  }
+
+  const handleAutoFill = async () => {
+    if (!draft) return
+    setFillStatus('starting')
+    setFillMessage('Starting browser...')
+    setError('')
+    try {
+      const res = await fetch(`${API}/apply/${job.id}/automate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cover_letter: draft.cover_letter,
+          custom_answers: draft.custom_answers,
+        }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      setFillAts(data.ats || '')
+      setFillStatus('filling')
+      startPoll()
+    } catch (e) {
+      setError(e.message)
+      setFillStatus('idle')
+    }
+  }
+
+  const handleMarkApplied = async () => {
+    setSubmitting(true)
+    try {
+      await fetch(`${API}/apply/${job.id}/automate/close`, { method: 'POST' })
+      if (pollRef.current) clearInterval(pollRef.current)
+      onSubmitted(job.id)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const handleSubmit = async () => {
     setSubmitting(true)
@@ -65,6 +133,9 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
       setSubmitting(false)
     }
   }
+
+  const isFilling = fillStatus === 'starting' || fillStatus === 'filling'
+  const isFilled = fillStatus === 'filled'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
@@ -131,6 +202,24 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
               </>
             )}
 
+            {/* Auto-fill status */}
+            {(isFilling || isFilled || fillStatus === 'error') && (
+              <div className={`rounded-lg px-4 py-3 text-xs border ${
+                isFilled ? 'bg-green-950/40 border-green-800 text-green-300'
+                : fillStatus === 'error' ? 'bg-red-950 border-red-900 text-red-300'
+                : 'bg-[#252d38] border-[#334155] text-slate-300'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {isFilling && <span className="animate-spin">⟳</span>}
+                  {isFilled && <span>✓</span>}
+                  <span>
+                    {fillAts && <span className="font-semibold mr-1">{ATS_LABELS[fillAts] || fillAts}:</span>}
+                    {fillMessage}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {error && (
               <p className="text-xs text-red-400 bg-red-950 border border-red-900 rounded-lg px-3 py-2">{error}</p>
             )}
@@ -154,14 +243,37 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
             >
               Cancel
             </button>
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || loading || !draft}
-              className="px-5 py-2 text-sm bg-blue-500 hover:bg-blue-400 text-white disabled:opacity-40
-                         rounded-lg font-semibold transition-colors"
-            >
-              {submitting ? 'Submitting...' : 'Submit Application'}
-            </button>
+
+            {isFilled ? (
+              <button
+                onClick={handleMarkApplied}
+                disabled={submitting}
+                className="px-5 py-2 text-sm bg-green-600 hover:bg-green-500 text-white disabled:opacity-40
+                           rounded-lg font-semibold transition-colors"
+              >
+                {submitting ? 'Saving...' : 'Mark as Applied'}
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleAutoFill}
+                  disabled={isFilling || loading || !draft}
+                  className="px-5 py-2 text-sm bg-blue-500 hover:bg-blue-400 text-white disabled:opacity-40
+                             rounded-lg font-semibold transition-colors"
+                >
+                  {isFilling ? 'Filling form...' : 'Auto-fill Application'}
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || loading || !draft || isFilling}
+                  className="px-5 py-2 text-sm bg-[#252d38] hover:bg-[#2e3845] text-slate-300 disabled:opacity-40
+                             rounded-lg font-semibold transition-colors"
+                  title="Mark as applied without automation"
+                >
+                  {submitting ? 'Saving...' : 'Manual'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

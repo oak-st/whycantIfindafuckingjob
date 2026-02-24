@@ -487,6 +487,67 @@ async def submit_apply(job_id: int, body: ApplySubmit, db: Session = Depends(get
     return app_record
 
 
+# ── Auto-fill ─────────────────────────────────────────────────────────────────
+
+@app.post("/api/apply/{job_id}/automate")
+async def automate_apply(job_id: int, body: ApplySubmit,
+                         background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    from apply.filler import start_fill, detect_ats
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    settings = _load_settings(db)
+    resume_filename = settings.get("resume_filename", "")
+    resume_path = str(UPLOADS_DIR / resume_filename) if resume_filename else None
+
+    personal_info = {
+        "first_name":     settings.get("first_name", ""),
+        "last_name":      settings.get("last_name", ""),
+        "email":          settings.get("email", ""),
+        "phone":          settings.get("phone", ""),
+        "linkedin_url":   settings.get("linkedin_url", ""),
+        "city":           settings.get("city", ""),
+        "state":          settings.get("state", ""),
+        "work_authorized": settings.get("work_authorized", "true") == "true",
+    }
+
+    background_tasks.add_task(
+        start_fill,
+        job_id, job.url,
+        body.cover_letter, body.custom_answers,
+        personal_info, resume_path,
+    )
+    return {"status": "started", "ats": detect_ats(job.url)}
+
+
+@app.get("/api/apply/{job_id}/automate/status")
+def automate_status(job_id: int):
+    from apply.filler import get_fill_state
+    state = get_fill_state(job_id)
+    if not state:
+        return {"status": "idle"}
+    return {
+        "status": state["status"],
+        "ats": state.get("ats", ""),
+        "message": state.get("message", ""),
+    }
+
+
+@app.post("/api/apply/{job_id}/automate/close")
+async def automate_close(job_id: int, db: Session = Depends(get_db)):
+    from apply.filler import release_fill
+    release_fill(job_id)
+    # Mark job as applied
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if job:
+        job.status = "applied"
+        app_record = Application(job_id=job_id, cover_letter="", custom_answers={}, status="submitted")
+        db.add(app_record)
+        db.commit()
+    return {"status": "ok"}
+
+
 # ── Applications ──────────────────────────────────────────────────────────────
 
 @app.get("/api/applications", response_model=List[ApplicationOut])
@@ -532,6 +593,14 @@ def get_settings(db: Session = Depends(get_db)):
         auto_crawl_enabled=s.get("auto_crawl_enabled") == "true",
         auto_crawl_interval_hours=int(s.get("auto_crawl_interval_hours", "24")),
         show_browser=s.get("show_browser") == "true",
+        first_name=s.get("first_name", ""),
+        last_name=s.get("last_name", ""),
+        email=s.get("email", ""),
+        phone=s.get("phone", ""),
+        linkedin_url=s.get("linkedin_url", ""),
+        city=s.get("city", ""),
+        state=s.get("state", ""),
+        work_authorized=s.get("work_authorized", "true") == "true",
     )
 
 
@@ -559,6 +628,12 @@ def save_settings(body: SettingsIn, db: Session = Depends(get_db)):
         _set(db, "auto_crawl_interval_hours", str(body.auto_crawl_interval_hours))
     if body.show_browser is not None:
         _set(db, "show_browser", "true" if body.show_browser else "false")
+    for field in ("first_name", "last_name", "email", "phone", "linkedin_url", "city", "state"):
+        val = getattr(body, field, None)
+        if val is not None:
+            _set(db, field, val)
+    if body.work_authorized is not None:
+        _set(db, "work_authorized", "true" if body.work_authorized else "false")
     db.commit()
     s = _load_settings(db)
     _reschedule(

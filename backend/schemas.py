@@ -59,6 +59,15 @@ class SettingsIn(BaseModel):
     auto_crawl_enabled: Optional[bool] = None
     auto_crawl_interval_hours: Optional[int] = None  # 6 | 12 | 24 | 48
     show_browser: Optional[bool] = None
+    # Personal info for auto-fill
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    work_authorized: Optional[bool] = None
 
 
 class SettingsOut(BaseModel):
@@ -74,6 +83,15 @@ class SettingsOut(BaseModel):
     auto_crawl_enabled: bool = False
     auto_crawl_interval_hours: int = 24
     show_browser: bool = False
+    # Personal info for auto-fill
+    first_name: str = ""
+    last_name: str = ""
+    email: str = ""
+    phone: str = ""
+    linkedin_url: str = ""
+    city: str = ""
+    state: str = ""
+    work_authorized: bool = True
 
 
 class CrawlLogEntry(BaseModel):
