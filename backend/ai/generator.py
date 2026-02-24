@@ -12,7 +12,7 @@ async def generate_cover_letter(
 ) -> str:
     client = anthropic.Anthropic(api_key=api_key)
 
-    resume_section = f"\n\nMy resume:\n{resume_text[:3000]}" if resume_text else ""
+    resume_section = f"\n\nMy resume:\n{resume_text[:4000]}" if resume_text else ""
 
     prompt = f"""Write a concise, professional cover letter for the following job.
 
@@ -49,7 +49,7 @@ async def score_job_relevance(
     """Return a relevance score 1–10 for how well a job matches the candidate."""
     client = anthropic.AsyncAnthropic(api_key=api_key)
 
-    resume_section = f"\nCandidate resume excerpt: {resume_text[:600]}" if resume_text else ""
+    resume_section = f"\n\nCandidate resume:\n{resume_text[:3000]}" if resume_text else ""
 
     prompt = (
         f"Rate how well this job matches the candidate. "
@@ -82,7 +82,7 @@ async def generate_custom_answer(
 ) -> str:
     client = anthropic.Anthropic(api_key=api_key)
 
-    resume_section = f"\n\nMy resume:\n{resume_text[:2000]}" if resume_text else ""
+    resume_section = f"\n\nMy resume:\n{resume_text[:3000]}" if resume_text else ""
 
     prompt = f"""Answer the following job application question concisely and professionally.
 

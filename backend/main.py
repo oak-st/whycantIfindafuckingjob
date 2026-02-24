@@ -340,8 +340,7 @@ async def _async_crawl():
         # AI relevance scoring for newly saved jobs
         api_key = decrypt(settings.get("anthropic_api_key_enc", ""))
         if api_key:
-            resume_path = UPLOADS_DIR / settings.get("resume_filename", "")
-            resume_text = resume_path.read_text(errors="ignore") if resume_path.exists() else ""
+            resume_text = settings.get("resume_text", "")
             await _score_new_jobs(db, api_key, keywords, resume_text)
 
         if crawl_state.get("cancel_requested"):
@@ -453,10 +452,7 @@ async def start_apply(job_id: int, db: Session = Depends(get_db)):
     settings = _load_settings(db)
     api_key = decrypt(settings.get("anthropic_api_key_enc", ""))
 
-    resume_path = UPLOADS_DIR / settings.get("resume_filename", "")
-    resume_text = ""
-    if resume_path.exists():
-        resume_text = resume_path.read_text(errors="ignore")
+    resume_text = settings.get("resume_text", "")
 
     cover_letter = ""
     if api_key:
@@ -572,6 +568,25 @@ def save_settings(body: SettingsIn, db: Session = Depends(get_db)):
     return get_settings(db)
 
 
+def _extract_resume_text(path: Path) -> str:
+    """Extract plain text from PDF, DOCX, or TXT resume files."""
+    ext = path.suffix.lower()
+    try:
+        if ext == ".pdf":
+            from pypdf import PdfReader
+            reader = PdfReader(str(path))
+            return "\n".join(page.extract_text() or "" for page in reader.pages)
+        elif ext == ".docx":
+            from docx import Document
+            doc = Document(str(path))
+            return "\n".join(p.text for p in doc.paragraphs)
+        else:
+            return path.read_text(errors="ignore")
+    except Exception as e:
+        print(f"[Resume] Failed to extract text from {path.name}: {e}")
+        return ""
+
+
 @app.post("/api/resume")
 async def upload_resume(file: UploadFile = File(...), db: Session = Depends(get_db)):
     allowed = {".pdf", ".docx", ".txt"}
@@ -584,7 +599,10 @@ async def upload_resume(file: UploadFile = File(...), db: Session = Depends(get_
         content = await file.read()
         await f.write(content)
 
+    # Extract and cache plain text so all AI features use clean content
+    resume_text = _extract_resume_text(dest)
     _set(db, "resume_filename", file.filename)
+    _set(db, "resume_text", resume_text)
     db.commit()
     return {"filename": file.filename}
 
