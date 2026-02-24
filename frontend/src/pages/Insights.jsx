@@ -45,6 +45,8 @@ const SOURCE_COLORS = {
   palantir:    'bg-[#252d38] text-slate-300',
   figma:       'bg-purple-950 text-purple-400',
   zoom:        'bg-blue-950 text-blue-300',
+  salesforce:  'bg-sky-950 text-sky-400',
+  servicenow:  'bg-violet-950 text-violet-400',
 }
 
 const SORT_KEYS = ['avg_score', 'total', 'saved', 'applied', 'denied']

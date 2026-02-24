@@ -40,6 +40,8 @@ const SOURCE_COLORS = {
   roblox:      'bg-red-950 text-red-400',
   fanduel:     'bg-blue-950 text-blue-300',
   snowflake:   'bg-cyan-950 text-cyan-400',
+  salesforce:  'bg-sky-950 text-sky-400',
+  servicenow:  'bg-violet-950 text-violet-400',
 }
 
 const sourceLabel = (src) =>

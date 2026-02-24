@@ -83,6 +83,12 @@ WORKDAY: list[tuple[str, str, str, str]] = [
     ("Nvidia",      "nvidia.wd5",      "nvidia",      "NVIDIAExternalCareerSite"),
     ("CrowdStrike", "crowdstrike.wd5", "crowdstrike", "crowdstrikecareers"),
     ("Zoom",        "zoom.wd5",        "zoom",        "Zoom"),
+    ("Salesforce",  "salesforce.wd12", "salesforce",  "External_Career_Site"),
+]
+
+# SmartRecruiters: (company_display_name, company_id)
+SMARTRECRUITERS: list[tuple[str, str]] = [
+    ("ServiceNow", "ServiceNow"),
 ]
 
 
@@ -218,6 +224,22 @@ class CompanyCrawler:
                 await _delay()
             except Exception as e:
                 print(f"[Companies] {name} (workday) error: {e}")
+                if on_done: on_done(name, 0, error=True)
+
+        # SmartRecruiters companies
+        for name, company_id in SMARTRECRUITERS:
+            if _cancelled(): break
+            if on_start: on_start(name)
+            try:
+                found = await loop.run_in_executor(
+                    None, self._smartrecruiters, name, company_id, keywords
+                )
+                jobs.extend(found)
+                print(f"[Companies] {name}: {len(found)} jobs")
+                if on_done: on_done(name, len(found))
+                await _delay()
+            except Exception as e:
+                print(f"[Companies] {name} (smartrecruiters) error: {e}")
                 if on_done: on_done(name, 0, error=True)
 
         # Microsoft (gcsservices JSON API — no browser needed)
@@ -606,6 +628,60 @@ class CompanyCrawler:
                     "url": job_url,
                     "posted_date": "",
                 })
+        return results
+
+    # ── SmartRecruiters ────────────────────────────────────────────────────────
+
+    def _smartrecruiters(self, company: str, company_id: str,
+                         keywords: list[str]) -> list[dict]:
+        results: list[dict] = []
+        seen: set[str] = set()
+        for kw in keywords:
+            offset = 0
+            while True:
+                params = urllib.parse.urlencode({
+                    "limit": 100,
+                    "offset": offset,
+                    "q": kw,
+                })
+                url = (f"https://api.smartrecruiters.com/v1/companies"
+                       f"/{company_id}/postings?{params}")
+                try:
+                    data = _get(url)
+                except Exception:
+                    break
+                postings = data.get("content", [])
+                if not postings:
+                    break
+                for p in postings:
+                    ref = p.get("ref", "")
+                    job_id = ref.split("/")[-1] if ref else ""
+                    if not job_id or job_id in seen:
+                        continue
+                    seen.add(job_id)
+                    loc_data = p.get("location") or {}
+                    country = (loc_data.get("country") or "").lower()
+                    if country and country not in ("us", "usa"):
+                        continue
+                    full_loc = loc_data.get("fullLocation", "")
+                    if full_loc and not _location_ok(full_loc):
+                        continue
+                    title_slug = p.get("name", "").lower().replace(" ", "-").replace(",", "")
+                    posting_url = (f"https://jobs.smartrecruiters.com"
+                                   f"/{company_id}/{job_id}")
+                    results.append({
+                        "title": p.get("name", ""),
+                        "company": company,
+                        "location": full_loc,
+                        "salary": "",
+                        "description": "",
+                        "url": posting_url,
+                        "posted_date": (p.get("releasedDate", "") or "")[:10],
+                    })
+                total = data.get("totalFound", 0)
+                offset += len(postings)
+                if offset >= total or offset >= 500:
+                    break
         return results
 
     # ── Workday (Nvidia, CrowdStrike, …) ──────────────────────────────────────

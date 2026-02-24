@@ -538,6 +538,8 @@ export default function Dashboard() {
           <optgroup label="SaaS & Dev Tools">
             <option value="figma">{srcOpt('figma', 'Figma')}</option>
             <option value="palantir">{srcOpt('palantir', 'Palantir')}</option>
+            <option value="salesforce">{srcOpt('salesforce', 'Salesforce')}</option>
+            <option value="servicenow">{srcOpt('servicenow', 'ServiceNow')}</option>
             <option value="twilio">{srcOpt('twilio', 'Twilio')}</option>
             <option value="zoom">{srcOpt('zoom', 'Zoom')}</option>
           </optgroup>
