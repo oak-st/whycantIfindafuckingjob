@@ -66,17 +66,30 @@ const stripHtml = (html) => {
   return text.trim()
 }
 
-const crawledAgo = (iso) => {
-  if (!iso) return null
-  const diff = Date.now() - new Date(iso).getTime()
-  const mins  = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days  = Math.floor(diff / 86400000)
-  if (mins < 1)   return 'just now'
-  if (mins < 60)  return `${mins}m ago`
-  if (hours < 24) return `${hours}h ago`
-  if (days < 7)   return `${days}d ago`
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+const renderDesc = (text) => {
+  if (!text) return null
+  const paragraphs = text.split(/\n{2,}/).filter(p => p.trim())
+  return paragraphs.map((para, i) => {
+    const lines = para.split('\n').filter(l => l.trim())
+    const isList = lines.every(l => /^[\u2022\-\*\u00b7]|\d+\./.test(l.trim()))
+    if (isList) {
+      return (
+        <ul key={i} className="list-disc list-inside space-y-0.5 text-xs text-slate-400">
+          {lines.map((l, j) => (
+            <li key={j}>{l.replace(/^[\u2022\-\*\u00b7]\s*|\d+\.\s*/, '')}</li>
+          ))}
+        </ul>
+      )
+    }
+    if (lines.length > 1) {
+      return (
+        <ul key={i} className="list-disc list-inside space-y-0.5 text-xs text-slate-400">
+          {lines.map((l, j) => <li key={j}>{l}</li>)}
+        </ul>
+      )
+    }
+    return <p key={i} className="text-xs text-slate-400">{para.trim()}</p>
+  })
 }
 
 const autoFillStatus = (url = '') => {
@@ -242,12 +255,6 @@ export default function JobCard({
           )}
         </div>
 
-        {job.crawled_at && (
-          <span className="hidden xl:block text-xs text-slate-500 shrink-0 w-20 text-right">
-            {crawledAgo(job.crawled_at)}
-          </span>
-        )}
-
         {job.status !== 'applied' ? (
           <div className="flex gap-1.5 shrink-0">
             <button onClick={sp(() => onView && onView(job))}
@@ -364,9 +371,6 @@ export default function JobCard({
             {job.relevance_score}/10
           </span>
         )}
-        {job.crawled_at && (
-          <span className="text-slate-500 ml-auto">{crawledAgo(job.crawled_at)}</span>
-        )}
       </div>
 
       {cleanDesc && (
@@ -374,10 +378,10 @@ export default function JobCard({
           onClick={sp(() => setExpanded(e => !e))}
           className="cursor-pointer group"
         >
-          <p className={`text-xs text-slate-500 leading-relaxed whitespace-pre-line ${expanded ? '' : 'line-clamp-3'}`}>
-            {cleanDesc}
-          </p>
-          <div className="flex items-center gap-1 mt-1 text-slate-600 group-hover:text-slate-400 transition-colors">
+          <div className={`space-y-1.5 overflow-hidden ${expanded ? '' : 'max-h-[4.5rem]'}`}>
+            {renderDesc(cleanDesc)}
+          </div>
+          <div className="flex items-center gap-1 mt-1.5 text-slate-600 group-hover:text-slate-400 transition-colors">
             <ChevronIcon open={expanded} />
             <span className="text-[10px]">{expanded ? 'collapse' : 'expand'}</span>
           </div>
