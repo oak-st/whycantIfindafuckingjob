@@ -1,80 +1,136 @@
-"""Dice.com job crawler — IT-focused job board."""
-import json
+"""Dice.com job crawler — IT-focused job board (Playwright scraper)."""
+import asyncio
+import random
+import re
 import urllib.parse
-import urllib.request
 
-_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/json, text/plain, */*",
-    "Origin": "https://www.dice.com",
-    "Referer": "https://www.dice.com/",
-}
+from playwright.async_api import async_playwright
+from config import HEADLESS
 
-_API = "https://job-search-api.svc.dhigroupinc.com/v1/dice/jobs/search"
+
+async def _delay(min_s: float = 1.5, max_s: float = 3.0):
+    await asyncio.sleep(random.uniform(min_s, max_s))
+
+
+def _strip_html(text: str) -> str:
+    if not text:
+        return ""
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 
 class DiceCrawler:
-    def crawl(self, keywords: list[str], location: str = "United States",
-              max_jobs: int = 200) -> list[dict]:
+    async def crawl(self, keywords: list[str], location: str = "United States",
+                    max_jobs: int = 200, headless: bool | None = None) -> list[dict]:
+        _headless = HEADLESS if headless is None else headless
         results: list[dict] = []
         seen: set[str] = set()
 
-        for kw in keywords:
-            page_num = 1
-            while len(results) < max_jobs:
-                params = urllib.parse.urlencode({
-                    "q": kw,
-                    "countryCode2": "US",
-                    "pageSize": 100,
-                    "pageNumber": page_num,
-                    "language": "en",
-                })
-                url = f"{_API}?{params}"
-                try:
-                    req = urllib.request.Request(url, headers=_HEADERS)
-                    with urllib.request.urlopen(req, timeout=15) as resp:
-                        data = json.loads(resp.read())
-                except Exception as e:
-                    print(f"[Dice] API error (kw={kw!r} page={page_num}): {e}")
-                    break
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=_headless,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            context = await browser.new_context(
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Safari/537.36"
+                ),
+                viewport={"width": 1280, "height": 900},
+                locale="en-US",
+            )
+            page = await context.new_page()
 
-                jobs_data = data.get("data", [])
-                if not jobs_data:
-                    break
+            try:
+                for kw in keywords:
+                    if len(results) >= max_jobs:
+                        break
+                    q = urllib.parse.quote_plus(kw)
+                    url = f"https://www.dice.com/jobs?q={q}&countryCode=US&location=United+States&locationPrecision=Country&language=en"
+                    try:
+                        await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                        await _delay(3, 5)
 
-                for j in jobs_data:
-                    job_id = j.get("id", "")
-                    apply_url = j.get("applyUrl", "") or j.get("link", "")
-                    if not apply_url:
-                        apply_url = f"https://www.dice.com/job-detail/{job_id}" if job_id else ""
-                    if not apply_url or apply_url in seen:
+                        # Wait for job cards to load
+                        try:
+                            await page.wait_for_selector(
+                                "dhi-search-cards-widget, .card-title-link, [data-cy='search-result-list']",
+                                timeout=10000,
+                            )
+                        except Exception:
+                            pass
+
+                        # Extract job cards
+                        cards = await page.query_selector_all(
+                            "div[data-cy='search-result-list'] > *, "
+                            ".search-card, dhi-search-card, "
+                            "[data-testid='job-card']"
+                        )
+
+                        if not cards:
+                            # Try alternate selectors
+                            cards = await page.query_selector_all(
+                                "a.card-title-link, "
+                                "[class*='job-card'], "
+                                "article[class*='card']"
+                            )
+
+                        for card in cards:
+                            try:
+                                # Title + link
+                                link_el = await card.query_selector(
+                                    "a.card-title-link, a[data-cy='card-title-link'], "
+                                    "h5 a, h2 a, [class*='title'] a"
+                                )
+                                if not link_el:
+                                    link_el = await card.query_selector("a[href]")
+                                if not link_el:
+                                    continue
+
+                                title = (await link_el.inner_text()).strip()
+                                href = (await link_el.get_attribute("href") or "").strip()
+                                if not href:
+                                    continue
+                                if href.startswith("/"):
+                                    href = "https://www.dice.com" + href
+                                if href in seen:
+                                    continue
+                                seen.add(href)
+
+                                # Company
+                                co_el = await card.query_selector(
+                                    "[data-cy='search-result-company-name'], "
+                                    ".company-name, [class*='company']"
+                                )
+                                company = (await co_el.inner_text()).strip() if co_el else "Dice"
+
+                                # Location
+                                loc_el = await card.query_selector(
+                                    "[data-cy='search-result-location'], "
+                                    ".location, [class*='location']"
+                                )
+                                location_str = (await loc_el.inner_text()).strip() if loc_el else ""
+
+                                if title:
+                                    results.append({
+                                        "title": title,
+                                        "company": company,
+                                        "location": location_str,
+                                        "salary": "",
+                                        "description": "",
+                                        "url": href,
+                                        "posted_date": "",
+                                    })
+                            except Exception:
+                                pass
+
+                        await _delay(2, 4)
+                    except Exception as e:
+                        print(f"[Dice] Error for keyword {kw!r}: {e}")
                         continue
-                    seen.add(apply_url)
-
-                    loc = j.get("location", "")
-                    workplace = j.get("workplaceTypes", [])
-                    if isinstance(workplace, list) and workplace:
-                        loc = loc or workplace[0]
-
-                    posted = (j.get("postedDate") or "")[:10]
-
-                    results.append({
-                        "title": j.get("jobTitle", ""),
-                        "company": j.get("companyName", "Dice"),
-                        "location": loc,
-                        "salary": "",
-                        "description": j.get("descriptionTeaser", ""),
-                        "url": apply_url,
-                        "posted_date": posted,
-                    })
-
-                meta = data.get("meta", {})
-                total_results = meta.get("totalResults", 0)
-                if page_num * 100 >= total_results:
-                    break
-                page_num += 1
+            finally:
+                await browser.close()
 
         return results[:max_jobs]

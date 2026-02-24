@@ -62,32 +62,20 @@ GREENHOUSE: dict[str, str] = {
     # Sports betting / fintech
     "FanDuel":            "fanduel",
     # Cybersecurity
-    "Rapid7":             "rapid7",
-    "Tenable":            "tenable",
-    "Qualys":             "qualys",
-    "SentinelOne":        "sentinelone",
-    "Arctic Wolf":        "arcticwolf",
+    "Tenable":            "tenableinc",
     "BeyondTrust":        "beyondtrust",
-    "Varonis":            "varonis",
     "Netskope":           "netskope",
-    "Illumio":            "illumio",
     "Recorded Future":    "recordedfuture",
-    "Lacework":           "lacework",
     "Orca Security":      "orcasecurity",
-    "Vectra AI":          "vectra",
     "Exabeam":            "exabeam",
     "Axonius":            "axonius",
     "Cybereason":         "cybereason",
-    "Delinea":            "delinea",
     # IT operations / MSP platform vendors
     "ConnectWise":        "connectwise",
     "Kaseya":             "kaseya",
-    "Veeam":              "veeam",
-    "Nexthink":           "nexthink",
-    "Datto":              "datto",
+    "Veeam":              "veeamsoftware",
     "SolarWinds":         "solarwinds",
     "PagerDuty":          "pagerduty",
-    "Freshworks":         "freshworks",
 }
 
 # Companies using Ashby ATS (public job board API)
@@ -95,8 +83,9 @@ ASHBY: dict[str, str] = {
     "OpenAI":      "openai",
     "Snowflake":   "snowflake",
     "1Password":   "1password",
-    "Tailscale":   "tailscale",
     "Wiz":         "wiz",
+    "Delinea":     "delinea",
+    "Illumio":     "illumio",
 }
 
 LEVER: dict[str, str] = {

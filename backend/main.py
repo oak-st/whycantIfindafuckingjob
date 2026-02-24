@@ -403,10 +403,9 @@ async def _async_crawl():
             try:
                 from crawlers.dice import DiceCrawler
                 from collections import defaultdict as _dd
-                loop = asyncio.get_event_loop()
                 dice_crawler = DiceCrawler()
-                dice_jobs = await loop.run_in_executor(
-                    None, dice_crawler.crawl, keywords, location, max_jobs
+                dice_jobs = await dice_crawler.crawl(
+                    keywords, location, max_jobs=max_jobs, headless=headless
                 )
                 dice_jobs = _filter_by_keywords(dice_jobs, keywords)
                 dice_jobs = _filter_by_excluded_keywords(dice_jobs, exclude_keywords)
