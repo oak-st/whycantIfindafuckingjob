@@ -489,8 +489,9 @@ export default function Dashboard() {
                      focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer"
         >
           <option value="all">All Sources{jobs.length ? ` (${jobs.length})` : ''}</option>
-          <optgroup label="Platforms">
+          <optgroup label="Job Boards">
             <option value="glassdoor">{srcOpt('glassdoor', 'Glassdoor')}</option>
+            <option value="dice">{srcOpt('dice', 'Dice')}</option>
           </optgroup>
           <optgroup label="AI & Research">
             <option value="anthropic">{srcOpt('anthropic', 'Anthropic')}</option>
@@ -503,16 +504,52 @@ export default function Dashboard() {
           <optgroup label="Big Tech">
             <option value="amazon">{srcOpt('amazon', 'Amazon')}</option>
             <option value="apple">{srcOpt('apple', 'Apple')}</option>
+            <option value="cisco">{srcOpt('cisco', 'Cisco')}</option>
+            <option value="dell_technologies">{srcOpt('dell_technologies', 'Dell Technologies')}</option>
             <option value="google">{srcOpt('google', 'Google')}</option>
+            <option value="hpe">{srcOpt('hpe', 'HPE')}</option>
+            <option value="juniper_networks">{srcOpt('juniper_networks', 'Juniper Networks')}</option>
             <option value="microsoft">{srcOpt('microsoft', 'Microsoft')}</option>
             <option value="nvidia">{srcOpt('nvidia', 'Nvidia')}</option>
           </optgroup>
           <optgroup label="Cybersecurity">
+            <option value="arctic_wolf">{srcOpt('arctic_wolf', 'Arctic Wolf')}</option>
+            <option value="axonius">{srcOpt('axonius', 'Axonius')}</option>
+            <option value="beyondtrust">{srcOpt('beyondtrust', 'BeyondTrust')}</option>
             <option value="crowdstrike">{srcOpt('crowdstrike', 'CrowdStrike')}</option>
+            <option value="cybereason">{srcOpt('cybereason', 'Cybereason')}</option>
+            <option value="delinea">{srcOpt('delinea', 'Delinea')}</option>
+            <option value="exabeam">{srcOpt('exabeam', 'Exabeam')}</option>
+            <option value="fortinet">{srcOpt('fortinet', 'Fortinet')}</option>
+            <option value="illumio">{srcOpt('illumio', 'Illumio')}</option>
+            <option value="lacework">{srcOpt('lacework', 'Lacework')}</option>
+            <option value="netskope">{srcOpt('netskope', 'Netskope')}</option>
             <option value="okta">{srcOpt('okta', 'Okta')}</option>
+            <option value="orca_security">{srcOpt('orca_security', 'Orca Security')}</option>
+            <option value="palo_alto_networks">{srcOpt('palo_alto_networks', 'Palo Alto Networks')}</option>
             <option value="pure_storage">{srcOpt('pure_storage', 'Pure Storage')}</option>
+            <option value="qualys">{srcOpt('qualys', 'Qualys')}</option>
+            <option value="rapid7">{srcOpt('rapid7', 'Rapid7')}</option>
+            <option value="recorded_future">{srcOpt('recorded_future', 'Recorded Future')}</option>
             <option value="rubrik">{srcOpt('rubrik', 'Rubrik')}</option>
+            <option value="sentinelone">{srcOpt('sentinelone', 'SentinelOne')}</option>
+            <option value="tenable">{srcOpt('tenable', 'Tenable')}</option>
+            <option value="varonis">{srcOpt('varonis', 'Varonis')}</option>
+            <option value="vectra_ai">{srcOpt('vectra_ai', 'Vectra AI')}</option>
+            <option value="wiz">{srcOpt('wiz', 'Wiz')}</option>
             <option value="zscaler">{srcOpt('zscaler', 'Zscaler')}</option>
+          </optgroup>
+          <optgroup label="IT Operations & MSP">
+            <option value="connectwise">{srcOpt('connectwise', 'ConnectWise')}</option>
+            <option value="datto">{srcOpt('datto', 'Datto')}</option>
+            <option value="freshworks">{srcOpt('freshworks', 'Freshworks')}</option>
+            <option value="kaseya">{srcOpt('kaseya', 'Kaseya')}</option>
+            <option value="nexthink">{srcOpt('nexthink', 'Nexthink')}</option>
+            <option value="pagerduty">{srcOpt('pagerduty', 'PagerDuty')}</option>
+            <option value="solarwinds">{srcOpt('solarwinds', 'SolarWinds')}</option>
+            <option value="veeam">{srcOpt('veeam', 'Veeam')}</option>
+            <option value="1password">{srcOpt('1password', '1Password')}</option>
+            <option value="tailscale">{srcOpt('tailscale', 'Tailscale')}</option>
           </optgroup>
           <optgroup label="Data & Cloud">
             <option value="cloudflare">{srcOpt('cloudflare', 'Cloudflare')}</option>

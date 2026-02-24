@@ -29,44 +29,74 @@ _HEADERS = {
 
 GREENHOUSE: dict[str, str] = {
     # AI / research
-    "Anthropic":     "anthropic",
-    "Scale AI":      "scaleai",
-    "xAI":           "xai",
-    "Databricks":    "databricks",
+    "Anthropic":          "anthropic",
+    "Scale AI":           "scaleai",
+    "xAI":                "xai",
+    "Databricks":         "databricks",
     # Infrastructure / cloud / security
-    "Cloudflare":    "cloudflare",
-    "Datadog":       "datadog",
-    "Okta":          "okta",
-    "Zscaler":       "zscaler",
-    "Pure Storage":  "purestorage",
-    "Rubrik":        "rubrik",
-    "MongoDB":       "mongodb",
-    "Elastic":       "elastic",
-    "Twilio":        "twilio",
-    "Figma":         "figma",
+    "Cloudflare":         "cloudflare",
+    "Datadog":            "datadog",
+    "Okta":               "okta",
+    "Zscaler":            "zscaler",
+    "Pure Storage":       "purestorage",
+    "Rubrik":             "rubrik",
+    "MongoDB":            "mongodb",
+    "Elastic":            "elastic",
+    "Twilio":             "twilio",
+    "Figma":              "figma",
     # Fintech / crypto
-    "Stripe":        "stripe",
-    "Coinbase":      "coinbase",
-    "Robinhood":     "robinhood",
+    "Stripe":             "stripe",
+    "Coinbase":           "coinbase",
+    "Robinhood":          "robinhood",
     # Consumer / marketplace
-    "Airbnb":        "airbnb",
-    "Lyft":          "lyft",
-    "Reddit":        "reddit",
+    "Airbnb":             "airbnb",
+    "Lyft":               "lyft",
+    "Reddit":             "reddit",
     # Gaming / entertainment
-    "Riot Games":    "riotgames",
-    "Epic Games":    "epicgames",
-    "Bungie":        "bungie",
-    "Roblox":        "roblox",
+    "Riot Games":         "riotgames",
+    "Epic Games":         "epicgames",
+    "Bungie":             "bungie",
+    "Roblox":             "roblox",
     # Communication / social
-    "Discord":       "discord",
+    "Discord":            "discord",
     # Sports betting / fintech
-    "FanDuel":       "fanduel",
+    "FanDuel":            "fanduel",
+    # Cybersecurity
+    "Rapid7":             "rapid7",
+    "Tenable":            "tenable",
+    "Qualys":             "qualys",
+    "SentinelOne":        "sentinelone",
+    "Arctic Wolf":        "arcticwolf",
+    "BeyondTrust":        "beyondtrust",
+    "Varonis":            "varonis",
+    "Netskope":           "netskope",
+    "Illumio":            "illumio",
+    "Recorded Future":    "recordedfuture",
+    "Lacework":           "lacework",
+    "Orca Security":      "orcasecurity",
+    "Vectra AI":          "vectra",
+    "Exabeam":            "exabeam",
+    "Axonius":            "axonius",
+    "Cybereason":         "cybereason",
+    "Delinea":            "delinea",
+    # IT operations / MSP platform vendors
+    "ConnectWise":        "connectwise",
+    "Kaseya":             "kaseya",
+    "Veeam":              "veeam",
+    "Nexthink":           "nexthink",
+    "Datto":              "datto",
+    "SolarWinds":         "solarwinds",
+    "PagerDuty":          "pagerduty",
+    "Freshworks":         "freshworks",
 }
 
 # Companies using Ashby ATS (public job board API)
 ASHBY: dict[str, str] = {
-    "OpenAI":    "openai",
-    "Snowflake": "snowflake",
+    "OpenAI":      "openai",
+    "Snowflake":   "snowflake",
+    "1Password":   "1password",
+    "Tailscale":   "tailscale",
+    "Wiz":         "wiz",
 }
 
 LEVER: dict[str, str] = {
@@ -80,10 +110,16 @@ NETFLIX_API = "https://explore.jobs.netflix.net/api/apply/v2/jobs"
 
 # Workday: (company_display_name, workday_subdomain, tenant, site_id)
 WORKDAY: list[tuple[str, str, str, str]] = [
-    ("Nvidia",      "nvidia.wd5",      "nvidia",      "NVIDIAExternalCareerSite"),
-    ("CrowdStrike", "crowdstrike.wd5", "crowdstrike", "crowdstrikecareers"),
-    ("Zoom",        "zoom.wd5",        "zoom",        "Zoom"),
-    ("Salesforce",  "salesforce.wd12", "salesforce",  "External_Career_Site"),
+    ("Nvidia",              "nvidia.wd5",              "nvidia",              "NVIDIAExternalCareerSite"),
+    ("CrowdStrike",         "crowdstrike.wd5",          "crowdstrike",         "crowdstrikecareers"),
+    ("Zoom",                "zoom.wd5",                 "zoom",                "Zoom"),
+    ("Salesforce",          "salesforce.wd12",          "salesforce",          "External_Career_Site"),
+    ("Palo Alto Networks",  "paloaltonetworks.wd1",     "paloaltonetworks",    "PaloAltoNetworksJobBoard"),
+    ("Cisco",               "cisco.wd5",                "cisco",               "Cisco"),
+    ("Fortinet",            "fortinet.wd3",             "fortinet",            "Fortinet"),
+    ("Dell Technologies",   "dell.wd1",                 "dell",                "ExternalNonPublic"),
+    ("HPE",                 "hpe.wd5",                  "hpe",                 "Jobsathpe"),
+    ("Juniper Networks",    "juniper.wd3",              "juniper",             "JuniperCareers"),
 ]
 
 # SmartRecruiters: (company_display_name, company_id)

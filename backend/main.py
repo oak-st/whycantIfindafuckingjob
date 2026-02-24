@@ -61,7 +61,7 @@ async def _auth_middleware(request: Request, call_next):
 
 @app.post("/api/auth/login")
 def login(body: dict, db: Session = Depends(get_db)):
-    from auth import admin_username, admin_password, verify_password, create_token, decrypt as _
+    from auth import admin_username, admin_password, verify_password, create_token
     entered_user = body.get("username", "")
     entered_pass = body.get("password", "")
     if entered_user != admin_username():
@@ -355,9 +355,9 @@ async def _async_crawl():
 
         total = 0
 
-        # FAANG + AI company career pages
+        # Company career pages + job boards
         from crawlers.company import GREENHOUSE, ASHBY, LEVER, WORKDAY as _WORKDAY
-        crawl_state["total_sources"] = len(GREENHOUSE) + len(ASHBY) + len(LEVER) + 1 + len(_WORKDAY) + 1 + 3
+        crawl_state["total_sources"] = len(GREENHOUSE) + len(ASHBY) + len(LEVER) + 1 + len(_WORKDAY) + 1 + 3 + 1  # +1 Dice
         crawl_state["message"] = "Crawling company career pages..."
 
         def _on_company_start(name: str):
@@ -395,6 +395,37 @@ async def _async_crawl():
         except Exception as e:
             import traceback; traceback.print_exc()
             print(f"[Crawl] Company pages error: {e}")
+
+        # Dice.com (IT-focused job board)
+        if not crawl_state.get("cancel_requested"):
+            crawl_state["current_source"] = "Dice"
+            crawl_state["message"] = "Crawling Dice..."
+            try:
+                from crawlers.dice import DiceCrawler
+                from collections import defaultdict as _dd
+                loop = asyncio.get_event_loop()
+                dice_crawler = DiceCrawler()
+                dice_jobs = await loop.run_in_executor(
+                    None, dice_crawler.crawl, keywords, location, max_jobs
+                )
+                dice_jobs = _filter_by_keywords(dice_jobs, keywords)
+                dice_jobs = _filter_by_excluded_keywords(dice_jobs, exclude_keywords)
+                by_company: dict[str, list] = _dd(list)
+                for job in dice_jobs:
+                    by_company[_company_source(job.get("company", "dice"))].append(job)
+                dice_saved = 0
+                for src, company_jobs in by_company.items():
+                    n = _save_jobs(db, company_jobs, src, salary_min, salary_max)
+                    dice_saved += n
+                total += dice_saved
+                crawl_state["jobs_found"] = total
+                crawl_state["log"].append({"source": "Dice", "count": dice_saved, "error": False})
+                print(f"[Crawl] Dice: saved {dice_saved} jobs")
+            except Exception as e:
+                print(f"[Crawl] Dice error: {e}")
+                crawl_state["log"].append({"source": "Dice", "count": 0, "error": True})
+            finally:
+                crawl_state["current_source"] = None
 
         # Glassdoor
         gd_email = settings.get("glassdoor_email", "")
