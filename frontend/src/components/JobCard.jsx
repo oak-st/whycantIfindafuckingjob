@@ -79,6 +79,15 @@ const crawledAgo = (iso) => {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+const autoFillStatus = (url = '') => {
+  if (/greenhouse\.io/.test(url))              return 'full'
+  if (/lever\.co/.test(url))                   return 'full'
+  if (/ashbyhq\.com|jobs\.ashby\.io/.test(url)) return 'full'
+  if (/smartrecruiters\.com/.test(url))        return 'full'
+  if (/myworkdayjobs\.com/.test(url))          return 'partial'
+  return null
+}
+
 const sp = (fn) => (e) => { e.stopPropagation(); fn(e) }
 
 export default function JobCard({
@@ -88,6 +97,7 @@ export default function JobCard({
 }) {
   const cleanDesc = stripHtml(job.description)
   const badge = SOURCE_COLORS[job.source] || 'bg-[#252d38] text-slate-300'
+  const autofill = autoFillStatus(job.url)
   const selectable = !!onSelect && job.status !== 'applied'
   const statusColors = {
     new:     'border-[#2a3241]',
@@ -180,6 +190,16 @@ export default function JobCard({
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badge}`}>
           {sourceLabel(job.source)}
         </span>
+        {autofill === 'full' && (
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0 bg-green-950 text-green-400 border border-green-800">
+            Auto-fill ✓
+          </span>
+        )}
+        {autofill === 'partial' && (
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0 bg-amber-950 text-amber-400 border border-amber-800">
+            Partial
+          </span>
+        )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
@@ -267,6 +287,16 @@ export default function JobCard({
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge}`}>
               {sourceLabel(job.source)}
             </span>
+            {autofill === 'full' && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-950 text-green-400 border border-green-800">
+                Auto-fill ✓
+              </span>
+            )}
+            {autofill === 'partial' && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-950 text-amber-400 border border-amber-800">
+                Partial
+              </span>
+            )}
             {isNew && job.status === 'new' && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500 text-white font-bold">NEW</span>
             )}
