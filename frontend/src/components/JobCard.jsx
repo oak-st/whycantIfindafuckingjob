@@ -66,6 +66,19 @@ const stripHtml = (html) => {
   return text.trim()
 }
 
+const crawledAgo = (iso) => {
+  if (!iso) return null
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins < 1)   return 'just now'
+  if (mins < 60)  return `${mins}m ago`
+  if (hours < 24) return `${hours}h ago`
+  if (days < 7)   return `${days}d ago`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 const renderDesc = (text) => {
   if (!text) return null
   const paragraphs = text.split(/\n{2,}/).filter(p => p.trim())
@@ -116,7 +129,7 @@ export default function JobCard({
   isNew = false, compact = false,
   selected, onSelect, hidden = false,
 }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const cleanDesc = stripHtml(job.description)
   const badge = SOURCE_COLORS[job.source] || 'bg-[#252d38] text-slate-300'
   const autofill = autoFillStatus(job.url)
@@ -255,6 +268,12 @@ export default function JobCard({
           )}
         </div>
 
+        {job.crawled_at && (
+          <span className="hidden xl:block text-xs text-slate-500 shrink-0 w-20 text-right">
+            {crawledAgo(job.crawled_at)}
+          </span>
+        )}
+
         {job.status !== 'applied' ? (
           <div className="flex gap-1.5 shrink-0">
             <button onClick={sp(() => onView && onView(job))}
@@ -370,6 +389,9 @@ export default function JobCard({
           }`}>
             {job.relevance_score}/10
           </span>
+        )}
+        {job.crawled_at && (
+          <span className="text-slate-500 ml-auto">{crawledAgo(job.crawled_at)}</span>
         )}
       </div>
 
