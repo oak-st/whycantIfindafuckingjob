@@ -33,6 +33,7 @@ const ATS_LABELS = {
 export default function ApplyModal({ job, onClose, onSubmitted }) {
   const [draft, setDraft] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [regenerating, setRegenerating] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -73,6 +74,21 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
         }
       } catch { /* ignore */ }
     }, 1500)
+  }
+
+  const handleRegenerate = async () => {
+    setRegenerating(true)
+    setError('')
+    try {
+      const res = await fetch(`${API}/apply/${job.id}`, { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to generate cover letter')
+      const data = await res.json()
+      setDraft(d => ({ ...d, cover_letter: data.cover_letter, generation_error: data.generation_error }))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setRegenerating(false)
+    }
   }
 
   const handleAutoFill = async () => {
@@ -176,12 +192,38 @@ export default function ApplyModal({ job, onClose, onSubmitted }) {
             {!loading && draft && (
               <>
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase mb-2">Cover Letter</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-semibold text-slate-500 uppercase">Cover Letter</h3>
+                    {draft.generation_error !== 'no_api_key' && (
+                      <button
+                        onClick={handleRegenerate}
+                        disabled={regenerating}
+                        className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-40 transition-colors flex items-center gap-1"
+                      >
+                        {regenerating ? <><span className="animate-spin">⟳</span> Generating...</> : '⟳ Regenerate'}
+                      </button>
+                    )}
+                  </div>
+
+                  {draft.generation_error === 'no_api_key' && (
+                    <div className="mb-2 rounded-lg px-3 py-2 text-xs bg-yellow-950/40 border border-yellow-700 text-yellow-300">
+                      No Anthropic API key configured. Add one in{' '}
+                      <a href="/settings" className="underline hover:text-yellow-100">Settings</a>{' '}
+                      to generate cover letters automatically. You can still write one manually below.
+                    </div>
+                  )}
+
+                  {draft.generation_error && draft.generation_error !== 'no_api_key' && (
+                    <div className="mb-2 rounded-lg px-3 py-2 text-xs bg-red-950/40 border border-red-800 text-red-300">
+                      Generation failed: {draft.generation_error}. You can write one manually or try regenerating.
+                    </div>
+                  )}
+
                   <textarea
                     value={draft.cover_letter}
                     onChange={e => setDraft(d => ({ ...d, cover_letter: e.target.value }))}
                     rows={10}
-                    placeholder="Cover letter will appear here. You can edit it before submitting."
+                    placeholder={draft.generation_error === 'no_api_key' ? 'Write your cover letter here...' : 'Cover letter will appear here. You can edit it before submitting.'}
                     className="w-full bg-[#252d38] border border-[#334155] rounded-lg px-3 py-2 text-xs text-slate-100
                                placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/30 resize-none leading-relaxed"
                   />

@@ -40,6 +40,7 @@ class ApplyDraft(BaseModel):
     job_id: int
     cover_letter: str
     custom_answers: dict
+    generation_error: Optional[str] = None  # "no_api_key" | error message | None
 
 
 class ApplySubmit(BaseModel):

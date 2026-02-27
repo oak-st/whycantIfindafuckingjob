@@ -575,17 +575,23 @@ async def start_apply(job_id: int, db: Session = Depends(get_db)):
     resume_text = settings.get("resume_text", "")
 
     cover_letter = ""
-    if api_key:
-        from ai.generator import generate_cover_letter
-        cover_letter = await generate_cover_letter(
-            api_key=api_key,
-            job_title=job.title,
-            company=job.company,
-            job_description=job.description,
-            resume_text=resume_text,
-        )
+    generation_error = None
+    if not api_key:
+        generation_error = "no_api_key"
+    else:
+        try:
+            from ai.generator import generate_cover_letter
+            cover_letter = await generate_cover_letter(
+                api_key=api_key,
+                job_title=job.title,
+                company=job.company,
+                job_description=job.description,
+                resume_text=resume_text,
+            )
+        except Exception as e:
+            generation_error = str(e)
 
-    return ApplyDraft(job_id=job_id, cover_letter=cover_letter, custom_answers={})
+    return ApplyDraft(job_id=job_id, cover_letter=cover_letter, custom_answers={}, generation_error=generation_error)
 
 
 @app.post("/api/apply/{job_id}/submit", response_model=ApplicationOut)
