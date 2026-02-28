@@ -147,6 +147,25 @@ def _filter_by_excluded_keywords(jobs: list[dict], exclude_keywords: list[str]) 
     return result
 
 
+_REMOTE_LOCATION_TERMS = {"remote", "anywhere", "worldwide", "work from home", "wfh", "distributed"}
+
+
+def _filter_by_work_type(jobs: list[dict], work_type: str | None) -> list[dict]:
+    """When work_type is 'remote', keep only jobs whose location indicates remote work.
+    Jobs with a blank location are kept (many remote postings omit location entirely).
+    """
+    if work_type != "remote":
+        return jobs
+    result = []
+    for job in jobs:
+        loc = (job.get("location") or "").lower()
+        if not loc:
+            result.append(job)
+        elif any(t in loc for t in _REMOTE_LOCATION_TERMS):
+            result.append(job)
+    return result
+
+
 def _parse_salary_min(salary_str: str) -> Optional[int]:
     """Extract the lower-bound annual salary from an unstructured string. Returns None if unparseable."""
     if not salary_str:
@@ -348,6 +367,7 @@ async def _async_crawl():
         keywords = [k.strip() for k in settings.get("search_keywords", "IT Engineer").split(",") if k.strip()]
         exclude_keywords = [k.strip() for k in settings.get("exclude_keywords", "").split(",") if k.strip()]
         location = settings.get("search_location", "United States")
+        work_type = settings.get("work_type", "any")  # remote | hybrid | onsite | any
         salary_min = int(settings["salary_min"]) if settings.get("salary_min") else None
         salary_max = int(settings["salary_max"]) if settings.get("salary_max") else None
         max_jobs = int(settings.get("max_jobs", "50"))
@@ -381,6 +401,7 @@ async def _async_crawl():
             )
             jobs = _filter_by_keywords(jobs, keywords)
             jobs = _filter_by_excluded_keywords(jobs, exclude_keywords)
+            jobs = _filter_by_work_type(jobs, work_type)
             print(f"[Crawl] Companies after keyword filter: {len(jobs)} jobs")
             # Save each company under its own source key
             by_company: dict[str, list] = defaultdict(list)
@@ -405,10 +426,12 @@ async def _async_crawl():
                 from collections import defaultdict as _dd
                 dice_crawler = DiceCrawler()
                 dice_jobs = await dice_crawler.crawl(
-                    keywords, location, max_jobs=max_jobs, headless=headless
+                    keywords, location, max_jobs=max_jobs, headless=headless,
+                    remote_only=(work_type == "remote"),
                 )
                 dice_jobs = _filter_by_keywords(dice_jobs, keywords)
                 dice_jobs = _filter_by_excluded_keywords(dice_jobs, exclude_keywords)
+                dice_jobs = _filter_by_work_type(dice_jobs, work_type)
                 by_company: dict[str, list] = _dd(list)
                 for job in dice_jobs:
                     by_company[_company_source(job.get("company", "dice"))].append(job)

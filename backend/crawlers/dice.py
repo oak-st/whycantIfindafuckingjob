@@ -14,7 +14,8 @@ async def _delay(min_s: float = 2.0, max_s: float = 4.0):
 
 class DiceCrawler:
     async def crawl(self, keywords: list[str], location: str = "United States",
-                    max_jobs: int = 200, headless: bool | None = None) -> list[dict]:
+                    max_jobs: int = 200, headless: bool | None = None,
+                    remote_only: bool = False) -> list[dict]:
         _headless = HEADLESS if headless is None else headless
         results: list[dict] = []
         seen: set[str] = set()
@@ -44,6 +45,8 @@ class DiceCrawler:
                         f"https://www.dice.com/jobs?q={q}"
                         f"&countryCode=US&language=en"
                     )
+                    if remote_only:
+                        url += "&filters.workplaceTypes=Remote"
                     try:
                         await page.goto(url, wait_until="networkidle", timeout=30000)
                         await _delay(2, 4)
