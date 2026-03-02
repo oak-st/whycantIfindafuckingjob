@@ -184,6 +184,7 @@ export default function Settings() {
       if (!res.ok) throw new Error(await res.text())
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
+      loadSettings()
     } catch (e) {
       setError(e.message)
     } finally {
@@ -241,9 +242,10 @@ export default function Settings() {
 
       <Section title="USAJobs (Federal Roles)">
         <p className="text-xs text-slate-500 -mt-1">
-          Optional — crawls USAJobs.gov for federal IT/cyber jobs (DHS, DoD, NSA, etc.).{' '}
+          Optional — crawls USAJobs.gov for federal IT/cyber roles (DHS, DoD, CISA, NSA, etc.).
+          Credentials are encrypted and stored locally.
           Get a free API key at{' '}
-          <a href="https://developer.usajobs.gov/" target="_blank" rel="noreferrer"
+          <a href="https://developer.usajobs.gov/APIRequest/Index" target="_blank" rel="noreferrer"
              className="text-blue-400 hover:text-blue-300">developer.usajobs.gov</a>.
         </p>
         {hasSavedUsaJobs && (
@@ -252,10 +254,11 @@ export default function Settings() {
             <span>Credentials saved — use the eye icon to verify, or type new values to replace them</span>
           </div>
         )}
-        <Field label="Email (used as API User-Agent)" type="email" value={form.usajobs_email}
-          onChange={set('usajobs_email')} placeholder="your@email.com" />
-        <SecretField label="API Key" value={form.usajobs_api_key}
-          onChange={set('usajobs_api_key')} placeholder="your-usajobs-api-key" />
+        <Field label="USAJobs Email" type="email" value={form.usajobs_email}
+          onChange={set('usajobs_email')} placeholder="your@email.com"
+          hint="The email you registered with at developer.usajobs.gov" />
+        <SecretField label="USAJobs API Key" value={form.usajobs_api_key}
+          onChange={set('usajobs_api_key')} placeholder="your-api-key" />
       </Section>
 
       <Section title="Job Search Preferences">
