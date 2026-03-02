@@ -70,21 +70,14 @@ GREENHOUSE: dict[str, str] = {
     "Exabeam":            "exabeam",
     "Axonius":            "axonius",
     "Cybereason":         "cybereason",
-    "SentinelOne":        "sentinelone",
-    "Rapid7":             "rapid7",
-    "Snyk":               "snyk",
-    "Varonis":            "varonis",
-    "Arctic Wolf":        "arcticwolf",
+    "SentinelOne":        "sentinellabs",
     "Armis":              "armissecurity",
-    "Proofpoint":         "proofpoint",
     # IT operations / MSP platform vendors
     "ConnectWise":        "connectwise",
     "Kaseya":             "kaseya",
     "Veeam":              "veeamsoftware",
     "SolarWinds":         "solarwinds",
     "PagerDuty":          "pagerduty",
-    # Infrastructure / observability
-    "Confluent":          "confluent",
 }
 
 # Companies using Ashby ATS (public job board API)
@@ -95,6 +88,7 @@ ASHBY: dict[str, str] = {
     "Wiz":         "wiz",
     "Delinea":     "delinea",
     "Illumio":     "illumio",
+    "Confluent":   "confluent",
 }
 
 LEVER: dict[str, str] = {
@@ -118,6 +112,8 @@ WORKDAY: list[tuple[str, str, str, str]] = [
     ("Dell Technologies",   "dell.wd1",                 "dell",                "ExternalNonPublic"),
     ("HPE",                 "hpe.wd5",                  "hpe",                 "Jobsathpe"),
     ("Juniper Networks",    "juniper.wd3",              "juniper",             "JuniperCareers"),
+    ("Arctic Wolf",         "arcticwolf.wd1",           "arcticwolf",          "External"),
+    ("Proofpoint",          "proofpoint.wd5",           "proofpoint",          "proofpointcareers"),
 ]
 
 # SmartRecruiters: (company_display_name, company_id)

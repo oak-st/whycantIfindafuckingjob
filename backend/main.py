@@ -483,8 +483,18 @@ async def _async_crawl():
             try:
                 from crawlers.usajobs import USAJobsCrawler
                 uj_crawler = USAJobsCrawler(email=uj_email, api_key=uj_api_key)
-                uj_jobs = await uj_crawler.crawl(keywords, max_jobs=max_jobs)
-                uj_jobs = _filter_by_keywords(uj_jobs, keywords)
+                uj_jobs = await uj_crawler.crawl(
+                    keywords, max_jobs=max_jobs, remote_only=(work_type == "remote")
+                )
+                # Federal job titles use "Specialist" not "Engineer", so augment the
+                # user's keywords with common federal IT equivalents before filtering.
+                _FEDERAL_IT_TERMS = [
+                    "information technology", "IT specialist", "cybersecurity",
+                    "network administrator", "systems administrator",
+                    "information systems", "computer scientist", "cloud computing",
+                    "information assurance", "data scientist",
+                ]
+                uj_jobs = _filter_by_keywords(uj_jobs, keywords + _FEDERAL_IT_TERMS)
                 uj_jobs = _filter_by_excluded_keywords(uj_jobs, exclude_keywords)
                 uj_jobs = _filter_by_work_type(uj_jobs, work_type)
                 n = _save_jobs(db, uj_jobs, "usajobs", salary_min, salary_max)

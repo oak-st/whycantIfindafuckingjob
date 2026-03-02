@@ -16,11 +16,13 @@ class USAJobsCrawler:
         self.email = email
         self.api_key = api_key
 
-    async def crawl(self, keywords: list[str], max_jobs: int = 200) -> list[dict]:
+    async def crawl(self, keywords: list[str], max_jobs: int = 200,
+                    remote_only: bool = False) -> list[dict]:
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self._crawl_sync, keywords, max_jobs)
+        return await loop.run_in_executor(None, self._crawl_sync, keywords, max_jobs, remote_only)
 
-    def _crawl_sync(self, keywords: list[str], max_jobs: int) -> list[dict]:
+    def _crawl_sync(self, keywords: list[str], max_jobs: int,
+                    remote_only: bool = False) -> list[dict]:
         results: list[dict] = []
         seen: set[str] = set()
         headers = {
@@ -32,13 +34,16 @@ class USAJobsCrawler:
         for kw in keywords:
             page = 1
             while len(results) < max_jobs:
-                params = urllib.parse.urlencode({
+                query: dict = {
                     "Keyword": kw,
                     "LocationName": "United States",
                     "ResultsPerPage": 25,
                     "Page": page,
                     "WhoMayApply": "public",
-                })
+                }
+                if remote_only:
+                    query["RemoteIndicator"] = "True"
+                params = urllib.parse.urlencode(query)
                 req = urllib.request.Request(
                     f"{self.BASE_URL}?{params}", headers=headers
                 )
