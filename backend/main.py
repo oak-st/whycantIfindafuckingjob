@@ -474,6 +474,30 @@ async def _async_crawl():
             finally:
                 crawl_state["current_source"] = None
 
+        # USAJobs.gov (federal IT/cyber roles)
+        uj_email = settings.get("usajobs_email", "")
+        uj_api_key = decrypt(settings.get("usajobs_api_key_enc", ""))
+        if uj_email and uj_api_key and not crawl_state.get("cancel_requested"):
+            crawl_state["current_source"] = "USAJobs"
+            crawl_state["message"] = "Crawling USAJobs..."
+            try:
+                from crawlers.usajobs import USAJobsCrawler
+                uj_crawler = USAJobsCrawler(email=uj_email, api_key=uj_api_key)
+                uj_jobs = await uj_crawler.crawl(keywords, max_jobs=max_jobs)
+                uj_jobs = _filter_by_keywords(uj_jobs, keywords)
+                uj_jobs = _filter_by_excluded_keywords(uj_jobs, exclude_keywords)
+                uj_jobs = _filter_by_work_type(uj_jobs, work_type)
+                n = _save_jobs(db, uj_jobs, "usajobs", salary_min, salary_max)
+                total += n
+                crawl_state["jobs_found"] = total
+                crawl_state["log"].append({"source": "USAJobs", "count": n, "error": False})
+                print(f"[Crawl] USAJobs: saved {n} jobs")
+            except Exception as e:
+                print(f"[Crawl] USAJobs error: {e}")
+                crawl_state["log"].append({"source": "USAJobs", "count": 0, "error": True})
+            finally:
+                crawl_state["current_source"] = None
+
         # AI relevance scoring for newly saved jobs
         api_key = decrypt(settings.get("anthropic_api_key_enc", ""))
         if api_key:
@@ -760,6 +784,9 @@ def get_settings(db: Session = Depends(get_db)):
         glassdoor_email_value=s.get("glassdoor_email", ""),
         glassdoor_password_value=decrypt(s.get("glassdoor_password_enc", "")),
         has_glassdoor_credentials=bool(s.get("glassdoor_email") and s.get("glassdoor_password_enc")),
+        usajobs_email_value=s.get("usajobs_email", ""),
+        usajobs_api_key_value=decrypt(s.get("usajobs_api_key_enc", "")),
+        has_usajobs_credentials=bool(s.get("usajobs_email") and s.get("usajobs_api_key_enc")),
     )
 
 
@@ -797,6 +824,10 @@ def save_settings(body: SettingsIn, db: Session = Depends(get_db)):
         _set(db, "glassdoor_email", body.glassdoor_email)
     if body.glassdoor_password is not None:
         _set(db, "glassdoor_password_enc", encrypt(body.glassdoor_password))
+    if body.usajobs_email is not None:
+        _set(db, "usajobs_email", body.usajobs_email)
+    if body.usajobs_api_key is not None:
+        _set(db, "usajobs_api_key_enc", encrypt(body.usajobs_api_key))
     db.commit()
     s = _load_settings(db)
     _reschedule(

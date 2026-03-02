@@ -73,6 +73,9 @@ class SettingsIn(BaseModel):
     # Glassdoor credentials
     glassdoor_email: Optional[str] = None
     glassdoor_password: Optional[str] = None
+    # USAJobs credentials
+    usajobs_email: Optional[str] = None
+    usajobs_api_key: Optional[str] = None
 
 
 class SettingsOut(BaseModel):
@@ -104,6 +107,10 @@ class SettingsOut(BaseModel):
     glassdoor_password_value: str = ""
     # Glassdoor
     has_glassdoor_credentials: bool = False
+    # USAJobs
+    usajobs_email_value: str = ""
+    usajobs_api_key_value: str = ""
+    has_usajobs_credentials: bool = False
 
 
 class CrawlLogEntry(BaseModel):

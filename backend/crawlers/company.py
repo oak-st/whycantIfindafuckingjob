@@ -70,12 +70,21 @@ GREENHOUSE: dict[str, str] = {
     "Exabeam":            "exabeam",
     "Axonius":            "axonius",
     "Cybereason":         "cybereason",
+    "SentinelOne":        "sentinelone",
+    "Rapid7":             "rapid7",
+    "Snyk":               "snyk",
+    "Varonis":            "varonis",
+    "Arctic Wolf":        "arcticwolf",
+    "Armis":              "armissecurity",
+    "Proofpoint":         "proofpoint",
     # IT operations / MSP platform vendors
     "ConnectWise":        "connectwise",
     "Kaseya":             "kaseya",
     "Veeam":              "veeamsoftware",
     "SolarWinds":         "solarwinds",
     "PagerDuty":          "pagerduty",
+    # Infrastructure / observability
+    "Confluent":          "confluent",
 }
 
 # Companies using Ashby ATS (public job board API)

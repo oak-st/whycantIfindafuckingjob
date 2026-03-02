@@ -72,6 +72,8 @@ export default function Settings() {
     anthropic_api_key: '',
     glassdoor_email: '',
     glassdoor_password: '',
+    usajobs_email: '',
+    usajobs_api_key: '',
     search_keywords: 'IT Engineer, Senior IT Engineer, IT Systems Engineer',
     exclude_keywords: '',
     search_location: 'United States',
@@ -100,6 +102,7 @@ export default function Settings() {
   const [error, setError] = useState('')
   const [hasSavedApiKey, setHasSavedApiKey] = useState(false)
   const [hasSavedGlassdoor, setHasSavedGlassdoor] = useState(false)
+  const [hasSavedUsaJobs, setHasSavedUsaJobs] = useState(false)
 
   const loadSettings = () =>
     fetch(`${API}/settings`)
@@ -110,6 +113,8 @@ export default function Settings() {
           anthropic_api_key: data.anthropic_api_key_value || '',
           glassdoor_email: data.glassdoor_email_value || '',
           glassdoor_password: data.glassdoor_password_value || '',
+          usajobs_email: data.usajobs_email_value || '',
+          usajobs_api_key: data.usajobs_api_key_value || '',
           search_keywords: data.search_keywords || f.search_keywords,
           exclude_keywords: data.exclude_keywords ?? '',
           search_location: data.search_location || f.search_location,
@@ -133,6 +138,7 @@ export default function Settings() {
         setResumeFilename(data.resume_filename || '')
         setHasSavedApiKey(data.has_anthropic_api_key ?? false)
         setHasSavedGlassdoor(data.has_glassdoor_credentials ?? false)
+        setHasSavedUsaJobs(data.has_usajobs_credentials ?? false)
       })
       .catch(() => {})
 
@@ -148,6 +154,8 @@ export default function Settings() {
       if (form.anthropic_api_key) body.anthropic_api_key = form.anthropic_api_key
       if (form.glassdoor_email) body.glassdoor_email = form.glassdoor_email
       if (form.glassdoor_password) body.glassdoor_password = form.glassdoor_password
+      if (form.usajobs_email) body.usajobs_email = form.usajobs_email
+      if (form.usajobs_api_key) body.usajobs_api_key = form.usajobs_api_key
       body.search_keywords = form.search_keywords
       body.exclude_keywords = form.exclude_keywords
       body.search_location = form.search_location
@@ -229,6 +237,25 @@ export default function Settings() {
           onChange={set('glassdoor_email')} placeholder="your@email.com" />
         <SecretField label="Glassdoor Password" value={form.glassdoor_password}
           onChange={set('glassdoor_password')} placeholder="••••••••" />
+      </Section>
+
+      <Section title="USAJobs (Federal Roles)">
+        <p className="text-xs text-slate-500 -mt-1">
+          Optional — crawls USAJobs.gov for federal IT/cyber jobs (DHS, DoD, NSA, etc.).{' '}
+          Get a free API key at{' '}
+          <a href="https://developer.usajobs.gov/" target="_blank" rel="noreferrer"
+             className="text-blue-400 hover:text-blue-300">developer.usajobs.gov</a>.
+        </p>
+        {hasSavedUsaJobs && (
+          <div className="flex items-center gap-2 text-xs text-green-400 bg-green-950/40 border border-green-800 rounded-lg px-3 py-2">
+            <span>✓</span>
+            <span>Credentials saved — use the eye icon to verify, or type new values to replace them</span>
+          </div>
+        )}
+        <Field label="Email (used as API User-Agent)" type="email" value={form.usajobs_email}
+          onChange={set('usajobs_email')} placeholder="your@email.com" />
+        <SecretField label="API Key" value={form.usajobs_api_key}
+          onChange={set('usajobs_api_key')} placeholder="your-usajobs-api-key" />
       </Section>
 
       <Section title="Job Search Preferences">
