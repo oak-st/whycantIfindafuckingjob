@@ -289,7 +289,7 @@ class CompanyCrawler:
         except Exception as e:
             print(f"[Companies] Playwright scrape error: {e}")
 
-        return jobs[:max_jobs]
+        return jobs
 
     # ── Greenhouse ────────────────────────────────────────────────────────────
 

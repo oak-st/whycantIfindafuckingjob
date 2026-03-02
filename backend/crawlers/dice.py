@@ -48,8 +48,14 @@ class DiceCrawler:
                     if remote_only:
                         url += "&filters.workplaceTypes=Remote"
                     try:
-                        await page.goto(url, wait_until="networkidle", timeout=30000)
-                        await _delay(2, 4)
+                        await page.goto(url, wait_until="load", timeout=30000)
+                        try:
+                            await page.wait_for_selector(
+                                '[data-testid="job-card"]', timeout=10000
+                            )
+                        except Exception:
+                            print(f"[Dice] kw={kw!r}: no cards appeared")
+                            continue
 
                         cards = await page.query_selector_all('[data-testid="job-card"]')
                         print(f"[Dice] kw={kw!r}: {len(cards)} cards")
